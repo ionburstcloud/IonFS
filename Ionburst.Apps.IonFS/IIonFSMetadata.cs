@@ -1,0 +1,22 @@
+﻿// Copyright Ionburst Limited 2020
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace Ionburst.Apps.IonFS
+{
+    public interface IIonFSMetadata
+    {
+        public bool Verbose { get;  set; }
+        public string RepositoryName { get; set; }
+        public string GetDataStore();
+
+        public Task MakeDir(IonFSObject folder);
+        public Task Move(IonFSObject source, IonFSObject target);
+        public Task<List<IonFSObject>> List(IonFSObject folder, bool recursive);
+        public Task<bool> IsEmpty(IonFSObject folder);
+        public Task<bool> Exists(IonFSObject fso);
+        public Task PutMetadata(IonFSMetadata metadata, IonFSObject folder);
+        public Task<IonFSMetadata> GetMetadata(IonFSObject file);
+        public Task DelMetadata(IonFSObject fsObject);
+    }
+}
