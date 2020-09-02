@@ -78,15 +78,15 @@ The Ionburst section is required to access the Ionburst SDK.
 
 ```
   "Ionburst": { 
-    "Profile": "dev_env_test_profile", 
-    "IonburstUri": "https://api.dev.ionburst.io/", 
+    "Profile": "example_profile", 
+    "IonburstUri": "https://api.example.ionburst.io/", 
     "TraceCredentialsFile": "OFF" 
   },  
 
 The AWS section is required to access the AWS SDK. 
 
   "AWS": { 
-    "Profile": "dev", 
+    "Profile": "example", 
     "Region": "eu-west-1" 
   }
 ```
