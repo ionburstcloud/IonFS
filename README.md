@@ -4,6 +4,8 @@
 
 IonFS provides a set of tools to manage data stored by Ionburst as if it were a remote filesystem.  Whilst IonFS stores primary data items within Ionburst, the metadata is stored in an S3 bucket; anyone with access to this bucket, and the appropriate Ionburst credentials, can interact with the data stored within.  
 
+An introduction to IonFS is available on the Ionburst blog [here](https://ionburst.io/ionfs-a-client-and-metadata-store-for-ionburst/).
+
 ## Overview
 
 ```
