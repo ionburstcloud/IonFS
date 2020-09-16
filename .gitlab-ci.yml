@@ -16,7 +16,7 @@ build_windows:
   - 'ls -lah publish'
   - 'mv publish/IonFS.exe publish/ionfs.exe'
   - 'cd publish'
-  - 'tar cfvj ../$CI_PROJECT_NAME-$VERSION-windows.tar.bz2 .'
+  - 'tar cfvj ../$CI_PROJECT_NAME-$VERSION-windows.tar.bz2 ./*'
  when: manual
  allow_failure: false
  artifacts:
@@ -40,7 +40,7 @@ build_mac:
   - 'ls -lah publish'
   - 'mv publish/IonFS publish/ionfs'
   - 'cd publish'
-  - 'tar cfvj ../$CI_PROJECT_NAME-$VERSION-mac.tar.bz2 .'
+  - 'tar cfvj ../$CI_PROJECT_NAME-$VERSION-mac.tar.bz2 ./*'
  when: manual
  allow_failure: false
  artifacts:
@@ -64,7 +64,7 @@ build_linux:
   - 'ls -lah publish'
   - 'mv publish/IonFS publish/ionfs'
   - 'cd publish'
-  - 'tar cfvj ../$CI_PROJECT_NAME-$VERSION-linux.tar.bz2 .'
+  - 'tar cfvj ../$CI_PROJECT_NAME-$VERSION-linux.tar.bz2 ./*'
  when: manual
  allow_failure: false
  artifacts:
@@ -88,7 +88,7 @@ build_linux_arm64:
   - 'ls -lah publish'
   - 'mv publish/IonFS publish/ionfs'
   - 'cd publish'
-  - 'tar cfvj ../$CI_PROJECT_NAME-$VERSION-linux-arm64.tar.bz2 .'
+  - 'tar cfvj ../$CI_PROJECT_NAME-$VERSION-linux-arm64.tar.bz2 ./*'
  when: manual
  allow_failure: false
  artifacts:
