@@ -1,10 +1,10 @@
-# Ionburst IonFS [![Gitter](https://badges.gitter.im/ionburstlimited/community.svg)](https://gitter.im/ionburstlimited/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
+# Ionburst Cloud IonFS [![Gitter](https://badges.gitter.im/ionburstlimited/community.svg)](https://gitter.im/ionburstlimited/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-**IonFS** has been developed to illustrate how a client application typically integrates with Ionburst. 
+**IonFS CLI** has been developed to illustrate how a client application typically integrates with Ionburst Cloud. 
 
-IonFS provides a set of tools to manage data stored by Ionburst as if it were a remote filesystem.  Whilst IonFS stores primary data items within Ionburst, the metadata is stored in an S3 bucket; anyone with access to this bucket, and the appropriate Ionburst credentials, can interact with the data stored within.  
+IonFS provides a set of tools to manage data stored by Ionburst Cloud as if it were a remote filesystem. While IonFS stores primary data items within Ionburst Cloud, the metadata is stored in an S3 bucket; anyone with access to this bucket, and the appropriate Ionburst Cloud credentials, can interact with the stored data. 
 
-An introduction to IonFS is available on the Ionburst blog [here](https://ionburst.io/ionfs-a-client-and-metadata-store-for-ionburst/).
+An introduction to IonFS is available on the Ionburst Cloud developer blog [here.](https://ionburst.cloud/blog/ionfs-a-client-and-metadata-store-for-ionburst/) 
 
 ## Overview
 
@@ -97,7 +97,7 @@ The AWS section is required to access the AWS SDK.
 
 Please use the following community resources to get help. We use [Gitlab issues][sdk-issues] to track bugs and feature requests.
 * Join the Ionburst chat on [gitter](https://gitter.im/ionburstlimited/community)
-* Get in touch with [Ionburst Support](https://docs.ionburst.io/#/introduction?id=contact-amp-support)
+* Get in touch with [Ionburst Support](https://ionburst.cloud/contact/)
 * If it turns out that you may have found a bug, please open an [issue][sdk-issues]
 
 ### Opening Issues
@@ -107,8 +107,9 @@ If you find a bug, or have an issue with the Ionburst SDK for .NET we would like
 The [Gitlab issues][sdk-issues] are intended for bug reports and feature requests. For help and questions with using the Ionburst SDK for .NET please make use of the resources listed in the Getting Help section. There are limited resources available for handling issues and by keeping the list of open issues clean we can respond in a timely manner.
 
 [ionburst]: https://ionburst.io
-[sdk-website]: https://docs.ionburst.io/#/sdk
+[ionburst-cloud]: https://ionburst.cloud
+[sdk-website]: https://ionburst.cloud/docs/sdk/
 [sdk-source]: https://gitlab.com/ionburst/ionfs
 [sdk-issues]: https://gitlab.com/ionburst/ionfs/issues
 [sdk-license]: https://gitlab.com/ionburst/ionfst/-/blob/master/LICENSE
-[docs-api]: https://docs.ionburst.io/#/api
+[docs-api]: https://ionburst.cloud/docs/api/
