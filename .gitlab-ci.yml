@@ -27,10 +27,10 @@ build_windows:
   - . build_info
   - echo $RELEASE_VERSION
   - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
+  - 'cd Ionburst.Apps.IonFS'
   - cat $MINISIGN > minisign.key
   - echo $MINISIGN_PASS > min_pass
   - 'ls -lah'
-  - 'cd Ionburst.Apps.IonFS'
   - 'dotnet restore -s https://api.nuget.org/v3/index.json'
  script:
   - 'dotnet build -c Release -p:AssemblyVersion=$RELEASE_VERSION -p:PackageVersion=$RELEASE_VERSION'
@@ -40,7 +40,7 @@ build_windows:
   - 'mv publish/IonFS.exe publish/ionfs.exe'
   - 'cd publish'
   - 'tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-windows.tar.bz2 ./*'
-  - 'cd ..'
+  - 'cd ../..'
   - 'minisign -s minisign.key -Sm $CI_PROJECT_NAME-$RELEASE_VERSION-windows.tar.bz2 -t "ionfs $RELEASE_VERSION" < min_pass'
   - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-windows.tar.bz2 scw-fr-par/ionfs/'
   - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-windows.tar.bz2.minisig scw-fr-par/ionfs/'
@@ -59,10 +59,10 @@ build_mac:
   - . build_info
   - echo $RELEASE_VERSION
   - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
+  - 'cd Ionburst.Apps.IonFS'
   - cat $MINISIGN > minisign.key
   - echo $MINISIGN_PASS > min_pass
   - 'ls -lah'
-  - 'cd Ionburst.Apps.IonFS'
   - 'dotnet restore -s https://api.nuget.org/v3/index.json'
  script:
   - 'dotnet build -c Release -p:AssemblyVersion=$RELEASE_VERSION -p:PackageVersion=$RELEASE_VERSION'
@@ -91,10 +91,10 @@ build_linux:
   - . build_info
   - echo $RELEASE_VERSION
   - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
+  - 'cd Ionburst.Apps.IonFS'
   - cat $MINISIGN > minisign.key
   - echo $MINISIGN_PASS > min_pass
   - 'ls -lah'
-  - 'cd Ionburst.Apps.IonFS'
   - 'dotnet restore -s https://api.nuget.org/v3/index.json'
  script:
   - 'dotnet build -c Release -p:AssemblyVersion=$RELEASE_VERSION -p:PackageVersion=$RELEASE_VERSION'
@@ -123,10 +123,10 @@ build_linux_arm64:
   - . build_info
   - echo $RELEASE_VERSION
   - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
+  - 'cd Ionburst.Apps.IonFS'
   - cat $MINISIGN > minisign.key
   - echo $MINISIGN_PASS > min_pass
   - 'ls -lah'
-  - 'cd Ionburst.Apps.IonFS'
   - 'dotnet restore -s https://api.nuget.org/v3/index.json'
  script:
   - 'dotnet build -c Release -p:AssemblyVersion=$RELEASE_VERSION -p:PackageVersion=$RELEASE_VERSION'
