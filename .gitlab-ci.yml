@@ -1,101 +1,157 @@
 image : $IMAGE
 
 stages:
+  - version
   - build_releases
+  - publish
+
+version:
+  stage: version
+  script:
+   - release next-version --allow-current
+   - release next-version --allow-current > .next-version
+   - export GSG_INITIAL_DEVELOPMENT=false
+   - echo "RELEASE_SHA=$CI_COMMIT_SHA" > build_info
+   - echo "RELEASE_VERSION=$(cat .next-version)" >> build_info
+   - cat build_info
+   - . build_info
+   - echo $RELEASE_VERSION
+  artifacts:
+    paths:
+      - build_info
 
 build_windows:
  stage: build_releases
  before_script:
+  - cat build_info
+  - . build_info
+  - echo $RELEASE_VERSION
+  - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
+  - cat $MINISIGN > minisign.key
+  - echo $MINISIGN_PASS > min_pass
   - 'ls -lah'
   - 'cd Ionburst.Apps.IonFS'
   - 'dotnet restore -s https://api.nuget.org/v3/index.json'
  script:
-  - 'dotnet build -c Release -p:AssemblyVersion=$VERSION -p:PackageVersion=$VERSION'
-  - 'dotnet publish -c Release -p:AssemblyVersion=$VERSION -p:PackageVersion=$VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime win-x64'
+  - 'dotnet build -c Release -p:AssemblyVersion=$RELEASE_VERSION -p:PackageVersion=$RELEASE_VERSION'
+  - 'dotnet publish -c Release -p:AssemblyVersion=$RELEASE_VERSION -p:PackageVersion=$RELEASE_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime win-x64'
   - 'cp -R bin/Release/netcoreapp3.1/win-x64/publish .'
   - 'ls -lah publish'
   - 'mv publish/IonFS.exe publish/ionfs.exe'
   - 'cd publish'
-  - 'tar cfvj ../$CI_PROJECT_NAME-$VERSION-windows.tar.bz2 ./*'
+  - 'tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-windows.tar.bz2 ./*'
+  - 'cd ..'
+  - 'minisign -s minisign.key -Sm $CI_PROJECT_NAME-$RELEASE_VERSION-windows.tar.bz2 -t "ionfs $RELEASE_VERSION" < min_pass'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-windows.tar.bz2 scw-fr-par/ionfs/'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-windows.tar.bz2.minisig scw-fr-par/ionfs/'
+  - 'mc ls scw-fr-par/ionfs/'
+  - 'rm -f minisign.key'
+  - 'rm -f min_pass'
  when: manual
  allow_failure: false
- artifacts:
-  paths:
-  - /builds/ionburst/ionfs/Ionburst.Apps.IonFS/$CI_PROJECT_NAME-$VERSION-windows.tar.bz2
-  name: "$CI_PROJECT_NAME-$VERSION-windows"
-  when: on_success
  only:
   - master
 
 build_mac:
  stage: build_releases
  before_script:
+  - cat build_info
+  - . build_info
+  - echo $RELEASE_VERSION
+  - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
+  - cat $MINISIGN > minisign.key
+  - echo $MINISIGN_PASS > min_pass
   - 'ls -lah'
   - 'cd Ionburst.Apps.IonFS'
   - 'dotnet restore -s https://api.nuget.org/v3/index.json'
  script:
-  - 'dotnet build -c Release -p:AssemblyVersion=$VERSION -p:PackageVersion=$VERSION'
-  - 'dotnet publish -c Release -p:AssemblyVersion=$VERSION -p:PackageVersion=$VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime osx-x64'
+  - 'dotnet build -c Release -p:AssemblyVersion=$RELEASE_VERSION -p:PackageVersion=$RELEASE_VERSION'
+  - 'dotnet publish -c Release -p:AssemblyVersion=$RELEASE_VERSION -p:PackageVersion=$RELEASE_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime osx-x64'
   - 'cp -R bin/Release/netcoreapp3.1/osx-x64/publish .'
   - 'ls -lah publish'
   - 'mv publish/IonFS publish/ionfs'
   - 'cd publish'
-  - 'tar cfvj ../$CI_PROJECT_NAME-$VERSION-mac.tar.bz2 ./*'
+  - 'tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-mac.tar.bz2 ./*'
+  - 'cd ..'
+  - 'minisign -s minisign.key -Sm ionfs-$RELEASE_VERSION-mac.tar.bz2 -t "ionfs $RELEASE_VERSION" < min_pass'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-mac.tar.bz2 scw-fr-par/ionfs/'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-mac.tar.bz2.minisig scw-fr-par/ionfs/'
+  - 'mc ls scw-fr-par/ionfs/'
+  - 'rm -f minisign.key'
+  - 'rm -f min_pass'
  when: manual
  allow_failure: false
- artifacts:
-  paths:
-  - /builds/ionburst/ionfs/Ionburst.Apps.IonFS/$CI_PROJECT_NAME-$VERSION-mac.tar.bz2
-  name: "$CI_PROJECT_NAME-$VERSION-mac"
-  when: on_success
  only:
   - master
   
 build_linux:
  stage: build_releases
  before_script:
+  - cat build_info
+  - . build_info
+  - echo $RELEASE_VERSION
+  - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
+  - cat $MINISIGN > minisign.key
+  - echo $MINISIGN_PASS > min_pass
   - 'ls -lah'
   - 'cd Ionburst.Apps.IonFS'
   - 'dotnet restore -s https://api.nuget.org/v3/index.json'
  script:
-  - 'dotnet build -c Release -p:AssemblyVersion=$VERSION -p:PackageVersion=$VERSION'
-  - 'dotnet publish -c Release -p:AssemblyVersion=$VERSION -p:PackageVersion=$VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime linux-x64'
+  - 'dotnet build -c Release -p:AssemblyVersion=$RELEASE_VERSION -p:PackageVersion=$RELEASE_VERSION'
+  - 'dotnet publish -c Release -p:AssemblyVersion=$RELEASE_VERSION -p:PackageVersion=$RELEASE_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime linux-x64'
   - 'cp -R bin/Release/netcoreapp3.1/linux-x64/publish .'
   - 'ls -lah publish'
   - 'mv publish/IonFS publish/ionfs'
   - 'cd publish'
-  - 'tar cfvj ../$CI_PROJECT_NAME-$VERSION-linux.tar.bz2 ./*'
+  - 'tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-linux.tar.bz2 ./*'
+  - 'cd ..'
+  - 'minisign -s minisign.key -Sm ionfs-$RELEASE_VERSION-linux.tar.bz2 -t "ionfs $RELEASE_VERSION" < min_pass'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux.tar.bz2 scw-fr-par/ionfs/'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux.tar.bz2.minisig scw-fr-par/ionfs/'
+  - 'mc ls scw-fr-par/ionfs/'
+  - 'rm -f minisign.key'
+  - 'rm -f min_pass'
  when: manual
  allow_failure: false
- artifacts:
-  paths:
-  - /builds/ionburst/ionfs/Ionburst.Apps.IonFS/$CI_PROJECT_NAME-$VERSION-linux.tar.bz2
-  name: "$CI_PROJECT_NAME-$VERSION-linux"
-  when: on_success
  only:
   - master
 
 build_linux_arm64:
  stage: build_releases
  before_script:
+  - cat build_info
+  - . build_info
+  - echo $RELEASE_VERSION
+  - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
+  - cat $MINISIGN > minisign.key
+  - echo $MINISIGN_PASS > min_pass
   - 'ls -lah'
   - 'cd Ionburst.Apps.IonFS'
   - 'dotnet restore -s https://api.nuget.org/v3/index.json'
  script:
-  - 'dotnet build -c Release -p:AssemblyVersion=$VERSION -p:PackageVersion=$VERSION'
-  - 'dotnet publish -c Release -p:AssemblyVersion=$VERSION -p:PackageVersion=$VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime linux-arm64'
+  - 'dotnet build -c Release -p:AssemblyVersion=$RELEASE_VERSION -p:PackageVersion=$RELEASE_VERSION'
+  - 'dotnet publish -c Release -p:AssemblyVersion=$RELEASE_VERSION -p:PackageVersion=$RELEASE_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime linux-arm64'
   - 'cp -R bin/Release/netcoreapp3.1/linux-arm64/publish .'
   - 'ls -lah publish'
   - 'mv publish/IonFS publish/ionfs'
   - 'cd publish'
-  - 'tar cfvj ../$CI_PROJECT_NAME-$VERSION-linux-arm64.tar.bz2 ./*'
+  - 'tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-linux-arm64.tar.bz2 ./*'
+  - 'cd ..'
+  - 'minisign -s minisign.key -Sm ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2 -t "ionfs $RELEASE_VERSION" < min_pass'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2 scw-fr-par/ionfs/'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2.minisig scw-fr-par/ionfs/'
+  - 'mc ls scw-fr-par/ionfs/'
+  - 'rm -f minisign.key'
+  - 'rm -f min_pass'
  when: manual
  allow_failure: false
- artifacts:
-  paths:
-  - /builds/ionburst/ionfs/Ionburst.Apps.IonFS/$CI_PROJECT_NAME-$VERSION-linux-arm64.tar.bz2
-  name: "$CI_PROJECT_NAME-$VERSION-linux-arm"
-  when: on_success
  only:
   - master
 
+publish:
+ stage: publish
+ script:
+  - release changelog
+  - release commit-and-tag CHANGELOG.md build_info
+ only:
+   - master
