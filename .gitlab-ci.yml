@@ -152,6 +152,7 @@ publish:
  stage: publish
  script:
   - cat build_info
+  - . build_info
   - echo "RELEASE_URL=https://ionfs.s3.fr-par.scw.cloud/ionfs-$RELEASE_VERSION-linux.tar.bz2" >> build_info
   - echo "RELEASE_SIG_URL=https://ionfs.s3.fr-par.scw.cloud/ionfs-$RELEASE_VERSION-linux.tar.bz2.minisig" >> build_info
   - echo "RELEASE_DESC=\"ionfs Linux amd64 binary\"" >> build_info
