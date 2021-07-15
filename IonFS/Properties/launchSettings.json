@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "IonFS": {
+      "commandName": "Project",
+      "commandLineArgs": "secrets get ion://second-S3/firstmessage"
+    }
+  }
+}

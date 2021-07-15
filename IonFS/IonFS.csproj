@@ -1,0 +1,30 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Authors>Jamie Hunter</Authors>
+    <Company>Ionburst Limited</Company>
+    <Product>IonFS</Product>
+    <AssemblyName>IonFS</AssemblyName>
+    <Configurations>Release;Debug</Configurations>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Figgle" Version="0.4.0" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20574.7" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Ionburst.Apps.IonFS\Ionburst.Apps.IonFS.csproj" />
+    <ProjectReference Include="..\Ionburst.Apps.IonFS.Model\Ionburst.Apps.IonFS.Model.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Update="appsettings.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+      <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+    </None>
+  </ItemGroup>
+
+</Project>
