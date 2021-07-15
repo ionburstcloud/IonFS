@@ -2,6 +2,11 @@
 using Xunit;
 using Xunit.Abstractions;
 
+using Ionburst.Apps.IonFS.Model;
+
+using Ionburst.Apps.IonFS.Repo.S3;
+using Ionburst.Apps.IonFS.Repo.Mongo;
+
 namespace Ionburst.Apps.IonFS.Tests
 {
     public class FSIonburstTests
@@ -23,7 +28,7 @@ namespace Ionburst.Apps.IonFS.Tests
             IonFSObject folder = ionburstFS.FromRemoteFolder("ion://atestfolder/");
             ionburstFS.MakeDirAsync(folder).Wait();
 
-            IIonFSMetadata metadata = new MetadataS3(ionburstFS.GetCurrentDataStore(), ionburstFS.GetCurrentRepositoryName());
+            IIonFSMetadata metadata = new MetadataS3(ionburstFS.GetCurrentDataStore(), ionburstFS.GetCurrentRepositoryName(), "Data");
             Assert.True(metadata.Exists(folder).Result);
 
             IonFSObject fsoPutFrom = IonFSObject.FromLocalFile("li.jpg");
@@ -81,7 +86,7 @@ namespace Ionburst.Apps.IonFS.Tests
             IonFSObject folder = ionburstFS.FromRemoteFolder("ion://iain-mongo/atestfolder/");
             ionburstFS.MakeDirAsync(folder).Wait();
 
-            IIonFSMetadata metadata = new MetadataMongoDB(ionburstFS.GetCurrentDataStore(), ionburstFS.GetCurrentRepositoryName());
+            IIonFSMetadata metadata = new MetadataMongoDB(ionburstFS.GetCurrentDataStore(), ionburstFS.GetCurrentRepositoryName(), "Data");
             Assert.True(metadata.Exists(folder).Result);
 
             IonFSObject fsoPutFrom = IonFSObject.FromLocalFile("li.jpg");

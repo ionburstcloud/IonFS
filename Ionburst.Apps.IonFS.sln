@@ -3,14 +3,23 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30114.105
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ionburst.Apps.IonFS", "Ionburst.Apps.IonFS\Ionburst.Apps.IonFS.csproj", "{C2239D5B-6069-47A3-A768-99641BDDBBA8}"
-EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Ionburst.Apps.IonFS.Tests", "Ionburst.Apps.IonFS.Tests\Ionburst.Apps.IonFS.Tests.csproj", "{A5E51CD9-926D-4E95-A7AB-2C95C3EF072B}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{07264E33-17D9-4E55-8F05-21199416AC4E}"
 	ProjectSection(SolutionItems) = preProject
 		.gitlab-ci.yml = .gitlab-ci.yml
+		.editorconfig = .editorconfig
 	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ionburst.Apps.IonFS.Model", "Ionburst.Apps.IonFS.Model\Ionburst.Apps.IonFS.Model.csproj", "{2396B3E3-EA79-4AB8-BAE8-174364989FAF}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "IonFS", "IonFS\IonFS.csproj", "{E275F1DB-BC5D-43AF-904D-8F76DBFE0F48}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ionburst.Apps.IonFS.Repo.S3", "Ionburst.Apps.IonFS.Repo.S3\Ionburst.Apps.IonFS.Repo.S3.csproj", "{3F36AB79-ECA7-49CB-B9DA-9982A8FF533F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ionburst.Apps.IonFS", "Ionburst.Apps.IonFS\Ionburst.Apps.IonFS.csproj", "{53D402CC-A2DB-4409-9857-7EBD5EDFA362}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ionburst.Apps.IonFS.Repo.MongoDB", "Ionburst.Apps.IonFS.Repo.MongoDB\Ionburst.Apps.IonFS.Repo.MongoDB.csproj", "{DD523136-495D-408B-A172-EDA822146AB3}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -18,19 +27,37 @@ Global
 		Release|Any CPU = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
-		{C2239D5B-6069-47A3-A768-99641BDDBBA8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{C2239D5B-6069-47A3-A768-99641BDDBBA8}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{C2239D5B-6069-47A3-A768-99641BDDBBA8}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{C2239D5B-6069-47A3-A768-99641BDDBBA8}.Release|Any CPU.Build.0 = Release|Any CPU
 		{A5E51CD9-926D-4E95-A7AB-2C95C3EF072B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{A5E51CD9-926D-4E95-A7AB-2C95C3EF072B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A5E51CD9-926D-4E95-A7AB-2C95C3EF072B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A5E51CD9-926D-4E95-A7AB-2C95C3EF072B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{2396B3E3-EA79-4AB8-BAE8-174364989FAF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{2396B3E3-EA79-4AB8-BAE8-174364989FAF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{2396B3E3-EA79-4AB8-BAE8-174364989FAF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{2396B3E3-EA79-4AB8-BAE8-174364989FAF}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E275F1DB-BC5D-43AF-904D-8F76DBFE0F48}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E275F1DB-BC5D-43AF-904D-8F76DBFE0F48}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E275F1DB-BC5D-43AF-904D-8F76DBFE0F48}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E275F1DB-BC5D-43AF-904D-8F76DBFE0F48}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3F36AB79-ECA7-49CB-B9DA-9982A8FF533F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3F36AB79-ECA7-49CB-B9DA-9982A8FF533F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3F36AB79-ECA7-49CB-B9DA-9982A8FF533F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3F36AB79-ECA7-49CB-B9DA-9982A8FF533F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{53D402CC-A2DB-4409-9857-7EBD5EDFA362}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{53D402CC-A2DB-4409-9857-7EBD5EDFA362}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{53D402CC-A2DB-4409-9857-7EBD5EDFA362}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{53D402CC-A2DB-4409-9857-7EBD5EDFA362}.Release|Any CPU.Build.0 = Release|Any CPU
+		{DD523136-495D-408B-A172-EDA822146AB3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{DD523136-495D-408B-A172-EDA822146AB3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{DD523136-495D-408B-A172-EDA822146AB3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{DD523136-495D-408B-A172-EDA822146AB3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {70AB8DD8-FCDF-4B1E-BD1C-6927CAF9B718}
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
 	EndGlobalSection
 EndGlobal

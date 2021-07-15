@@ -1,10 +1,10 @@
-﻿// Copyright Ionburst Limited 2020
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Linq;
 
+using Ionburst.Apps.IonFS.Model;
 using Ionburst.Apps.IonFS.Exceptions;
 using Figgle;
 
@@ -439,7 +439,14 @@ namespace Ionburst.Apps.IonFS
                     throw new ArgumentNullException(nameof(guid));
 
                 IonburstFS fs = new IonburstFS { Verbose = verbose };
-                await fs.GetChunk(guid);
+                var results = await fs.GetChunk(guid);
+
+                if (!results.All(r => r.Value == 200))
+                {
+                    Console.WriteLine($"Error receiving data Ionburst!");
+                    foreach (var r in results)
+                        Console.WriteLine($" {r.Key} {r.Value}");
+                }
             });
 
             return command;
@@ -552,7 +559,7 @@ namespace Ionburst.Apps.IonFS
 
 
                     Console.WriteLine("Available Classifications:\n");
-                    foreach (var c in classifications)
+                    foreach (var c in classifications.OrderBy(x => x.Key))
                     {
                         Console.WriteLine($" {c.Key}:{c.Value}");
                     }
@@ -645,7 +652,7 @@ namespace Ionburst.Apps.IonFS
                         {
                             IonburstFS ionburst = new IonburstFS();
 
-                            Console.WriteLine(" Ionburst is {0}\n", (ionburst.IonburstStatus) ? "Online" : "Offline");
+                            Console.WriteLine(" Ionburst {1} is {0}\n", (ionburst.IonburstStatus) ? "Online" : "Offline", ionburst.IonburstUri);
                             foreach (var v in ionburst.IonburstVersion)
                             {
                                 Console.WriteLine($" {v}");
