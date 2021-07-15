@@ -124,7 +124,7 @@ namespace IonFS
                     var results = await fs.GetAsync(fromFso, toFso);
                     if (!results.All(r => r.Value == 200))
                     {
-                        Console.WriteLine($"Error receiving data Ionburst!");
+                        Console.WriteLine($"Error receiving data from Ionburst!");
                         foreach (var r in results)
                             Console.WriteLine($" {r.Key} {r.Value}");
                     }
@@ -215,7 +215,7 @@ namespace IonFS
                     
                     if (!results.All(r => r.Value == 200))
                     {
-                        Console.WriteLine($"Error sending data to Ionburst!");
+                        Console.WriteLine($"Error sending data to Ionburst Cloud!");
                         foreach (var r in results)
                             Console.WriteLine($" {r.Key} {r.Value}");
                     }
@@ -235,7 +235,7 @@ namespace IonFS
             command.AddArgument(new Argument<string>("data", "data to store") { Arity = ArgumentArity.ExactlyOne });
             command.AddArgument(new Argument<string>("vault", "destination vault location, prefixed with ion://") { Arity = ArgumentArity.ExactlyOne });
             command.AddArgument(new Argument<string>("name", "name of secret") { Arity = ArgumentArity.ExactlyOne });
-            command.AddOption(new Option(new[] { "--classification", "-c" }) { Argument = new Argument<string>("classification", "Ionburst Classification") { Arity = ArgumentArity.ExactlyOne } });
+            command.AddOption(new Option(new[] { "--classification", "-c" }) { Argument = new Argument<string>("classification", "Ionburst Cloud Classification") { Arity = ArgumentArity.ExactlyOne } });
             command.AddOption(new Option(new[] { "--verbose", "-v" }));
             command.AddOption(new Option(new[] { "--key", "-k" }, "path to symmetric key") { Argument = new Argument<string>("key", "path to private key") { Arity = ArgumentArity.ExactlyOne } });
             command.AddOption(new Option(new[] { "--passphrase", "-pp" }, "passphrase to generate key") { Argument = new Argument<string>("key", "path to private key") { Arity = ArgumentArity.ExactlyOne } });
@@ -282,7 +282,7 @@ namespace IonFS
 
                     if (!results.All(r => r.Value == 200))
                     {
-                        Console.WriteLine($"Error sending data to Ionburst!");
+                        Console.WriteLine($"Error sending data to Ionburst Cloud!");
                         foreach (var r in results)
                             Console.WriteLine($" {r.Key} {r.Value}");
                     }
@@ -344,7 +344,7 @@ namespace IonFS
 
                     if (!results.All(r => r.Value == 200))
                     {
-                        Console.WriteLine($"Error receiving data Ionburst!");
+                        Console.WriteLine($"Error receiving data from Ionburst Cloud!");
                         foreach (var r in results)
                             Console.WriteLine($" {r.Key} {r.Value}");
                     }
@@ -390,7 +390,7 @@ namespace IonFS
                         var results = await fs.DelAsync(fso);
                         if (!results.All(r => r.Value == 200))
                         {
-                            Console.WriteLine($"Error removing data Ionburst!");
+                            Console.WriteLine($"Error removing data from Ionburst Cloud!");
                             foreach (var r in results)
                                 Console.WriteLine($" {r.Key} {r.Value}");
                         }
@@ -435,7 +435,7 @@ namespace IonFS
                         var results = await fs.DelAsync(fso);
                         if (!results.All(r => r.Value == 200))
                         {
-                            Console.WriteLine($"Error removing data Ionburst!");
+                            Console.WriteLine($"Error removing data from Ionburst Cloud!");
                             foreach (var r in results)
                                 Console.WriteLine($" {r.Key} {r.Value}");
                         }
@@ -660,7 +660,7 @@ namespace IonFS
 
                 if (!results.All(r => r.Value == 200))
                 {
-                    Console.WriteLine($"Error receiving data Ionburst!");
+                    Console.WriteLine($"Error receiving data from Ionburst Cloud!");
                     foreach (var r in results)
                         Console.WriteLine($" {r.Key} {r.Value}");
                 }
@@ -763,7 +763,7 @@ namespace IonFS
 
         private static Command GetClassifications()
         {
-            Command command = new Command("policy", "list the current Ionburst Classification Policies") { IsHidden = false };
+            Command command = new Command("policy", "list the current Ionburst Cloud Classification Policies") { IsHidden = false };
             command.Handler = CommandHandler.Create(async () =>
             {
                 try
@@ -862,7 +862,7 @@ namespace IonFS
         {
             try
             {
-                var command = new RootCommand("Securing your data on Ionburst.");
+                var command = new RootCommand("Securing your data on Ionburst Cloud.");
                 command.AddOption(new Option(new[] { "--version", "-v" }));
                 command.Handler = CommandHandler.Create<IConsole, bool>((console, version) =>
                 {
@@ -877,7 +877,7 @@ namespace IonFS
                         {
                             IonburstFS ionburst = new IonburstFS();
 
-                            Console.WriteLine(" Ionburst {1} is {0}\n", (ionburst.IonburstStatus) ? "Online" : "Offline", ionburst.IonburstUri);
+                            Console.WriteLine(" Ionburst Cloud {1} is {0}\n", (ionburst.IonburstStatus) ? "Online" : "Offline", ionburst.IonburstUri);
                             foreach (var v in ionburst.IonburstVersion)
                             {
                                 Console.WriteLine($" {v}");
