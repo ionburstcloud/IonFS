@@ -42,15 +42,17 @@ build_windows:
   - 'tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-windows.tar.bz2 ./*'
   - 'cd ..'
   - 'minisign -s minisign.key -Sm $CI_PROJECT_NAME-$RELEASE_VERSION-windows.tar.bz2 -t "ionfs $RELEASE_VERSION" < min_pass'
-  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-windows.tar.bz2 scw-fr-par/ionfs/'
-  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-windows.tar.bz2.minisig scw-fr-par/ionfs/'
-  - 'mc ls scw-fr-par/ionfs/'
+  - 'if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_path=scw-fr-par/ionfs/develop/; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_path=scw-fr-par/ionfs/; echo $ionfs_path; fi;'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-windows.tar.bz2 $ionfs_path'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-windows.tar.bz2.minisig $ionfs_path'
+  - 'mc ls $ionfs_path'
   - 'rm -f minisign.key'
   - 'rm -f min_pass'
  when: manual
  allow_failure: false
  only:
-  - master
+  - develop
+  - main
 
 build_mac:
  stage: build_releases
@@ -74,15 +76,17 @@ build_mac:
   - 'tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-mac.tar.bz2 ./*'
   - 'cd ..'
   - 'minisign -s minisign.key -Sm ionfs-$RELEASE_VERSION-mac.tar.bz2 -t "ionfs $RELEASE_VERSION" < min_pass'
-  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-mac.tar.bz2 scw-fr-par/ionfs/'
-  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-mac.tar.bz2.minisig scw-fr-par/ionfs/'
-  - 'mc ls scw-fr-par/ionfs/'
+  - 'if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_path=scw-fr-par/ionfs/develop/; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_path=scw-fr-par/ionfs/; echo $ionfs_path; fi;'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-mac.tar.bz2 $ionfs_path'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-mac.tar.bz2.minisig $ionfs_path'
+  - 'mc ls $ionfs_path'
   - 'rm -f minisign.key'
   - 'rm -f min_pass'
  when: manual
  allow_failure: false
  only:
-  - master
+  - develop
+  - main
   
 build_linux:
  stage: build_releases
@@ -106,15 +110,17 @@ build_linux:
   - 'tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-linux.tar.bz2 ./*'
   - 'cd ..'
   - 'minisign -s minisign.key -Sm ionfs-$RELEASE_VERSION-linux.tar.bz2 -t "ionfs $RELEASE_VERSION" < min_pass'
-  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux.tar.bz2 scw-fr-par/ionfs/'
-  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux.tar.bz2.minisig scw-fr-par/ionfs/'
-  - 'mc ls scw-fr-par/ionfs/'
+  - 'if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_path=scw-fr-par/ionfs/develop/; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_path=scw-fr-par/ionfs/; echo $ionfs_path; fi;'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux.tar.bz2 $ionfs_path'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux.tar.bz2.minisig $ionfs_path'
+  - 'mc ls $ionfs_path'
   - 'rm -f minisign.key'
   - 'rm -f min_pass'
  when: manual
  allow_failure: false
  only:
-  - master
+  - develop
+  - main
 
 build_linux_arm64:
  stage: build_releases
@@ -138,35 +144,38 @@ build_linux_arm64:
   - 'tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-linux-arm64.tar.bz2 ./*'
   - 'cd ..'
   - 'minisign -s minisign.key -Sm ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2 -t "ionfs $RELEASE_VERSION" < min_pass'
-  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2 scw-fr-par/ionfs/'
-  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2.minisig scw-fr-par/ionfs/'
-  - 'mc ls scw-fr-par/ionfs/'
+  - 'if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_path=scw-fr-par/ionfs/develop/; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_path=scw-fr-par/ionfs/; echo $ionfs_path; fi;'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2 $ionfs_path'
+  - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2.minisig $ionfs_path'
+  - 'mc ls $ionfs_path'
   - 'rm -f minisign.key'
   - 'rm -f min_pass'
  when: manual
  allow_failure: false
  only:
-  - master
+  - develop
+  - main
 
 publish:
  stage: publish
  script:
   - cat build_info
   - . build_info
-  - echo "RELEASE_URL=https://ionfs.s3.fr-par.scw.cloud/ionfs-$RELEASE_VERSION-linux.tar.bz2" >> build_info
-  - echo "RELEASE_SIG_URL=https://ionfs.s3.fr-par.scw.cloud/ionfs-$RELEASE_VERSION-linux.tar.bz2.minisig" >> build_info
+  - 'if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_uri=https://ionfs.s3.fr-par.scw.cloud/develop; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_uri=https://ionfs.s3.fr-par.scw.cloud; echo $ionfs_path; fi;'
+  - echo "RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-linux.tar.bz2" >> build_info
+  - echo "RELEASE_SIG_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-linux.tar.bz2.minisig" >> build_info
   - echo "RELEASE_DESC=\"ionfs Linux amd64 binary\"" >> build_info
   - echo "RELEASE_SIG_DESC=\"ionfs Linux amd64 binary signature\"" >> build_info
-  - echo "ARM64_RELEASE_URL=https://ionfs.s3.fr-par.scw.cloud/ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2" >> build_info
-  - echo "ARM64_SIG_RELEASE_URL=https://ionfs.s3.fr-par.scw.cloud/ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2.minisig" >> build_info
+  - echo "ARM64_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2" >> build_info
+  - echo "ARM64_SIG_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2.minisig" >> build_info
   - echo "ARM64_DESC=\"ionfs Linux arm64 binary\"" >> build_info
   - echo "ARM64_SIG_DESC=\"ionfs Linux arm64 binary signature\"" >> build_info
-  - echo "MAC_RELEASE_URL=https://ionfs.s3.fr-par.scw.cloud/ionfs-$RELEASE_VERSION-mac.tar.bz2" >> build_info
-  - echo "MAC_SIG_RELEASE_URL=https://ionfs.s3.fr-par.scw.cloud/ionfs-$RELEASE_VERSION-mac.tar.bz2.minisig" >> build_info
+  - echo "MAC_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-mac.tar.bz2" >> build_info
+  - echo "MAC_SIG_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-mac.tar.bz2.minisig" >> build_info
   - echo "MAC_DESC=\"ionfs Mac amd64 binary\"" >> build_info
   - echo "MAC_SIG_DESC=\"ionfs Mac amd64 binary signature\"" >> build_info
-  - echo "WIN_RELEASE_URL=https://ionfs.s3.fr-par.scw.cloud/ionfs-$RELEASE_VERSION-windows.tar.bz2" >> build_info
-  - echo "WIN_SIG_RELEASE_URL=https://ionfs.s3.fr-par.scw.cloud/ionfs-$RELEASE_VERSION-windows.tar.bz2.minisig" >> build_info
+  - echo "WIN_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-windows.tar.bz2" >> build_info
+  - echo "WIN_SIG_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-windows.tar.bz2.minisig" >> build_info
   - echo "WIN_DESC=\"ionfs Windows amd64 binary\"" >> build_info
   - echo "WIN_SIG_DESC=\"ionfs Windows amd64 binary signature\"" >> build_info
   - . build_info
@@ -181,4 +190,5 @@ publish:
   - release --ci-commit-tag v$RELEASE_VERSION add-download-link -n release -u $WIN_RELEASE_URL -d "$WIN_DESC"
   - release --ci-commit-tag v$RELEASE_VERSION add-download-link -n release -u $WIN_SIG_RELEASE_URL -d "$WIN_SIG_DESC"
  only:
-   - master
+   - develop
+   - main
