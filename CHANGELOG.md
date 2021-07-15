@@ -2,6 +2,14 @@
 
 <!--- next entry here -->
 
+## 0.1.2
+2021-07-15
+
+### Fixes
+
+- Update .gitlab-ci.yml - release links were broken[ci-skip] (7363a125d6910de53f323de3222b7be14eb28c79)
+- revert System.CommandLine (1fd6cff45b0698ed92c464ba357d8f664d556d99)
+
 ## 0.1.2-develop.1
 2021-07-15
 
