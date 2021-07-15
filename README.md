@@ -43,6 +43,14 @@ The primary configuration for IonFS is managed within the `appsettings.json` fil
 The IonFS section contains the main configuration items: 
 
 ```
+{   
+  "Logging": { 
+    "LogLevel": {
+      "Default": "Information",
+      "Microsoft": "Warning",
+      "Microsoft.Hosting.Lifetime": "Information"
+    }   
+  },
   "IonFS": {
     "MaxSize": "65536",
     "Verbose": "false",
@@ -70,6 +78,7 @@ The IonFS section contains the main configuration items:
     "Profile": "example", 
     "Region": "eu-west-1" 
   }
+}
 ```
 
 - `MaxSize` controls the chunking of data items being uploaded
