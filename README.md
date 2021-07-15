@@ -5,12 +5,14 @@
 
 **IonFS CLI** has been developed to illustrate how a client application typically integrates with Ionburst Cloud. 
 
-IonFS provides a set of tools to manage data and secrets stored by Ionburst Cloud as if it were a remote filesystem. While IonFS stores primary data items within Ionburst Cloud, the metadata is stored in an S3 bucket. Anyone that has been granted access to this repository, and the appropriate Ionburst Cloud credentials, can interact with the stored data.
+IonFS provides a set of tools to manage data and secrets stored by Ionburst Cloud as if it were a remote filesystem. While IonFS stores primary data items within Ionburst Cloud, the metadata is stored in an S3 bucket.
+
+Anyone that has been granted access to this repository, and the appropriate Ionburst Cloud credentials, can interact with the stored data.
 A getting started tutorial for IonFS is available on the Ionburst Cloud website [here.](https://ionburst.cloud/tutorials/get-started-with-ionfs) 
 
 ## Overview
 
-```
+```sh
 # ionfs --help 
 
 IonFS: 
@@ -42,7 +44,7 @@ The primary configuration for IonFS is managed within the `appsettings.json` fil
 
 The IonFS section contains the main configuration items: 
 
-```
+```json
 {   
   "Logging": { 
     "LogLevel": {
