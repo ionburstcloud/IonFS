@@ -1,4 +1,5 @@
-﻿// Copyright Cyborn Limited 2020
+﻿// Copyright Ionburst Limited 2018-2021
+
 using System;
 using System.IO;
 using static System.Environment;

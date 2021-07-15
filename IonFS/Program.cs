@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright Ionburst Limited 2018-2021
+
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;

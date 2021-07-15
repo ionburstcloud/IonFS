@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright Ionburst Limited 2018-2021
+
+using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;

@@ -1,4 +1,6 @@
-﻿using System.Collections.Generic;
+﻿// Copyright Ionburst Limited 2018-2021
+
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace Ionburst.Apps.IonFS.Model

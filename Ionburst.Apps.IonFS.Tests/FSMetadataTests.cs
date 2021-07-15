@@ -1,4 +1,6 @@
-﻿using Xunit;
+﻿// Copyright Ionburst Limited 2018-2021
+
+using Xunit;
 using Xunit.Abstractions;
 
 using Ionburst.Apps.IonFS.Model;

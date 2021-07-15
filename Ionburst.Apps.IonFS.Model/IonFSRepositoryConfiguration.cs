@@ -1,4 +1,6 @@
-﻿using System;
+﻿// Copyright Ionburst Limited 2018-2021
+
+using System;
 
 namespace Ionburst.Apps.IonFS.Model
 {

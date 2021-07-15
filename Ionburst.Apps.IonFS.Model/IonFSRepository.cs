@@ -1,4 +1,5 @@
-﻿
+﻿// Copyright Ionburst Limited 2018-2021
+
 namespace Ionburst.Apps.IonFS.Model
 {
     public class IonFSRepository

@@ -1,3 +1,5 @@
+// Copyright Ionburst Limited 2018-2021
+
 using Xunit;
 
 using Ionburst.Apps.IonFS.Model;
