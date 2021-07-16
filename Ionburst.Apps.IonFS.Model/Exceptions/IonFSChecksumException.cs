@@ -1,10 +1,10 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
+
+using Ionburst.Apps.IonFS.Model;
 
 namespace Ionburst.Apps.IonFS.Exceptions
 {
-    class IonFSChecksumException : IonFSException
+    public class IonFSChecksumException : IonFSException
     {
         public IonFSMetadata metadata;
 

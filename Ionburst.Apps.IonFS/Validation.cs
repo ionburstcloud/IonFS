@@ -1,7 +1,10 @@
-﻿// Copyright Ionburst Limited 2020
+﻿// Copyright Ionburst Limited 2018-2021
+
 using System;
 using System.IO;
 using System.Threading.Tasks;
+
+using Ionburst.Apps.IonFS.Model;
 
 namespace Ionburst.Apps.IonFS
 {

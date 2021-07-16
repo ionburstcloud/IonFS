@@ -1,4 +1,5 @@
-﻿// Copyright Ionburst Limited 2020
+﻿// Copyright Ionburst Limited 2018-2021
+
 using System;
 using System.IO;
 using static System.Environment;
@@ -8,7 +9,7 @@ using Microsoft.Extensions.Configuration;
 using MongoDB.Driver;
 using MongoDB.Bson.Serialization;
 
-namespace Ionburst.Apps.IonFS
+namespace Ionburst.Apps.IonFS.Repo.Mongo
 {
     public class MongoDBWrapper
     {

@@ -1,10 +1,11 @@
-﻿// Copyright Ionburst Limited 2020
+﻿// Copyright Ionburst Limited 2018-2021
+
 using System;
 
 using MongoDB.Bson;
 using MongoDB.Bson.Serialization.Attributes;
 
-namespace Ionburst.Apps.IonFS
+namespace Ionburst.Apps.IonFS.Repo.Mongo
 {
     [BsonIgnoreExtraElements]
     [BsonDiscriminator("MongoDBIonFSMetadata")]

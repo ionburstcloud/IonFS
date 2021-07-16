@@ -27,7 +27,7 @@ build_windows:
   - . build_info
   - echo $RELEASE_VERSION
   - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
-  - 'cd Ionburst.Apps.IonFS'
+  - 'cd IonFS'
   - cat $MINISIGN > minisign.key
   - echo $MINISIGN_PASS > min_pass
   - 'ls -lah'
@@ -61,7 +61,7 @@ build_mac:
   - . build_info
   - echo $RELEASE_VERSION
   - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
-  - 'cd Ionburst.Apps.IonFS'
+  - 'cd IonFS'
   - cat $MINISIGN > minisign.key
   - echo $MINISIGN_PASS > min_pass
   - 'ls -lah'
@@ -95,7 +95,7 @@ build_linux:
   - . build_info
   - echo $RELEASE_VERSION
   - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
-  - 'cd Ionburst.Apps.IonFS'
+  - 'cd IonFS'
   - cat $MINISIGN > minisign.key
   - echo $MINISIGN_PASS > min_pass
   - 'ls -lah'
@@ -129,7 +129,7 @@ build_linux_arm64:
   - . build_info
   - echo $RELEASE_VERSION
   - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
-  - 'cd Ionburst.Apps.IonFS'
+  - 'cd IonFS'
   - cat $MINISIGN > minisign.key
   - echo $MINISIGN_PASS > min_pass
   - 'ls -lah'

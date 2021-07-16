@@ -1,10 +1,11 @@
-﻿// Copyright Ionburst Limited 2020
+﻿// Copyright Ionburst Limited 2018-2021
+
 using System;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
 
-namespace Ionburst.Apps.IonFS
+namespace Ionburst.Apps.IonFS.Model
 {
     public class IonFSCrypto
     {

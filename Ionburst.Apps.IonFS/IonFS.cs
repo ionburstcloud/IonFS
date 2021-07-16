@@ -1,4 +1,5 @@
-﻿// Copyright Ionburst Limited 2020
+﻿// Copyright Ionburst Limited 2018-2021
+
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -12,22 +13,39 @@ using Microsoft.Extensions.Configuration;
 using Ionburst.SDK;
 using ion = Ionburst.SDK.Model;
 
+using Ionburst.Apps.IonFS.Model;
 using Ionburst.Apps.IonFS.Exceptions;
 using Newtonsoft.Json;
+using System.Reflection;
+using System.Text;
 
 namespace Ionburst.Apps.IonFS
 {
-    public class IonburstFS
+    public class IonburstFS : IDisposable
     {
         private IIonburstClient ionburstPrivate;
         private readonly IIonFSMetadata md;
+        private readonly IonFSRepository defaultRepo;
         private readonly IConfiguration config;
         private readonly IConfiguration ionFSConfig;
+
+        const long HardMaxSize = 65000000;
 
         public List<IonFSRepository> Repositories { get; }
 
         public bool Verbose { get; set; } = false;
-        public long MaxSize { get; set; } = 65536;
+        private long _maxSize;
+        public long MaxSize 
+        { 
+            get 
+            { 
+                return _maxSize; 
+            } 
+            set 
+            {
+                _maxSize = (value > HardMaxSize) ? HardMaxSize : value; 
+            } 
+        }
         public string Classification { get; set; }
         public bool Encrypt { get; set; }
         public string KeyPath { get; set; }
@@ -65,10 +83,20 @@ namespace Ionburst.Apps.IonFS
                 IonFSRepository newRepository = new IonFSRepository
                 {
                     Repository = configuredRepository.Name,
+                    Usage = configuredRepository.Usage,
                     DataStore = configuredRepository.DataStore
                 };
-                Type t = Type.GetType(configuredRepository.Class);
-                newRepository.Metadata = (IIonFSMetadata)Activator.CreateInstance(t, configuredRepository.DataStore, configuredRepository.Name);
+
+                //Type t = Type.GetType(configuredRepository.Class, Assembly.LoadFrom(configuredRepository.Assembly), );
+
+                Assembly assem = Assembly.LoadFrom(configuredRepository.Assembly);
+
+                Type t = Type.GetType(configuredRepository.Class,
+                      (name) => Assembly.LoadFrom(configuredRepository.Assembly),
+                      (a, b, c) => assem.GetType(configuredRepository.Class, true, false)
+                     );
+
+                newRepository.Metadata = (IIonFSMetadata)Activator.CreateInstance(t, configuredRepository.DataStore, configuredRepository.Name, configuredRepository.Usage);
                 Repositories.Add(newRepository);
             }
             if (Repositories.Count > 0)
@@ -85,7 +113,8 @@ namespace Ionburst.Apps.IonFS
             }
 
             // Default
-            md = Repositories.Find(r => r.IsDefault).Metadata;
+            defaultRepo = Repositories.Find(r => r.IsDefault);
+            md = defaultRepo.Metadata;
         }
 
         public long MaxUploadSize { get => GetIonburst().GetUploadSizeLimit().Result; }
@@ -93,6 +122,8 @@ namespace Ionburst.Apps.IonFS
         public List<string> IonburstVersion { get => GetIonburst().GetVersionDetails().Result;  }
 
         public bool IonburstStatus { get => GetIonburst().CheckIonburstAPI().Result; }
+
+        public string IonburstUri { get => GetIonburst().GetConfiguredUri().Result;  } 
 
         public string GetCurrentDataStore()
         {
@@ -109,7 +140,7 @@ namespace Ionburst.Apps.IonFS
             if (ionburstPrivate is null)
                 ionburstPrivate = IonburstClientFactory.CreateIonburstClient(ionFSConfig);
 
-            if (!ionburstPrivate.CheckIonBurstAPI().Result)
+            if (!ionburstPrivate.CheckIonburstAPI().Result)
                 throw new IonFSException($"** WARNING **: Ionburst is current unavailable!");
 
             return ionburstPrivate;
@@ -119,16 +150,20 @@ namespace Ionburst.Apps.IonFS
         {
             IonFSRepository repo = Repositories.Find(r => r.Repository == fso.Repository);
             
+            // Set Handler for Default repository
             IIonFSMetadata m = md;
             if (repo != null)
             {
+                fso.IsSecret = repo.Usage == "Secrets";
                 m = repo.Metadata;
             }
             else
             {
+                fso.IsSecret = defaultRepo.Usage == "Secrets"; 
                 fso.Repository = m.RepositoryName;
                 fso.HasRepository = true;
             }
+
 
             return m;
         }
@@ -170,7 +205,7 @@ namespace Ionburst.Apps.IonFS
                 IIonFSMetadata mh = GetMetadataHandler(file);
                 IonFSMetadata metadata = await mh.GetMetadata(file);
 
-                _ = Parallel.ForEach(metadata.Id, (id) =>
+                _ = Parallel.ForEach(metadata.Id, async (id) =>
                       {
                         // Ionburst
                         ion.DeleteObjectRequest delRequest = new ion.DeleteObjectRequest
@@ -179,7 +214,16 @@ namespace Ionburst.Apps.IonFS
                               TimeoutSpecified = true,
                               RequestTimeout = new TimeSpan(0, 2, 0)
                           };
-                          ion.DeleteObjectResult delResult = GetIonburst().DeleteAsync(delRequest).Result;
+
+                          ion.DeleteObjectResult delResult;
+                          if (mh.Usage == "Secrets")
+                          {
+                              delResult = await GetIonburst().SecretsDeleteAsync(delRequest);
+                          }
+                          else
+                          {
+                              delResult = await GetIonburst().DeleteAsync(delRequest);
+                          }
 
                           ids.Add(new KeyValuePair<Guid, int>(id, delResult.StatusCode));
                           if (Verbose)
@@ -228,6 +272,15 @@ namespace Ionburst.Apps.IonFS
                 using SHA256 sha = SHA256.Create();
 
                 MemoryStream data;
+                byte[] bytes;
+                if (source.IsText)
+                {
+                    bytes = Encoding.ASCII.GetBytes(source.Text);
+                }
+                else
+                {
+                    bytes = File.ReadAllBytes(source.FullName);
+                }
 
                 // Encrypt
                 if (Encrypt)
@@ -240,8 +293,6 @@ namespace Ionburst.Apps.IonFS
                     a.Key = Crypto.Key;
 
                     var encryptor = a.CreateEncryptor();
-                    var bytes = File.ReadAllBytes(source.FullName);
-
                     byte[] hashBytes = sha.ComputeHash(bytes);
                     metadata.Hash = Convert.ToBase64String(hashBytes);
 
@@ -251,7 +302,7 @@ namespace Ionburst.Apps.IonFS
                 }
                 else
                 {
-                    data = new MemoryStream(File.ReadAllBytes(source.FullName));
+                    data = new MemoryStream(bytes);
 
                     byte[] hashBytes = sha.ComputeHash(data);
                     metadata.Hash = Convert.ToBase64String(hashBytes);
@@ -319,7 +370,17 @@ namespace Ionburst.Apps.IonFS
                         }
                         putObjectRequest.DataStream = new MemoryStream(burst.data);
 
-                        ion.PutObjectResult putResult = GetIonburst().PutAsync(putObjectRequest).Result;
+                        ion.PutObjectResult putResult;
+                        if (mh.Usage == "Secrets")
+                        {
+                            var ion = GetIonburst();
+                            putResult = ion.SecretsPutAsync(putObjectRequest).Result;
+                        }
+                        else
+                        { 
+                            putResult = GetIonburst().PutAsync(putObjectRequest).Result; 
+                        }
+                        
                         ids.Add(burst.id, putResult.StatusCode);
                     }
                 );
@@ -332,7 +393,7 @@ namespace Ionburst.Apps.IonFS
 
             return ids;
         }
-
+            
         public async Task<Dictionary<Guid, int>> GetAsync(IonFSObject file, IonFSObject to)
         {
             if (file == null)
@@ -353,8 +414,26 @@ namespace Ionburst.Apps.IonFS
 
             if (string.IsNullOrEmpty(metadata.IV))
             {
-                using var fileStream = File.Create(to.FullName);
-                await LoadStreamFromIonburst(metadata, ids, fileStream);
+                Stream dataStream;
+                if (to.IsText)
+                {
+                    dataStream = new MemoryStream();
+                }
+                else
+                {
+                    dataStream = File.Create(to.FullName);
+                }
+                
+                await LoadStreamFromIonburst(metadata, ids, dataStream, mh);
+
+                if (to.IsText)
+                {
+                    dataStream.Position = 0;
+                    using var reader = new StreamReader(dataStream);
+                    to.Text = reader.ReadToEnd();
+                }
+
+                dataStream.Dispose();
             }
             else // Encrypted file
             {
@@ -362,7 +441,7 @@ namespace Ionburst.Apps.IonFS
                     throw new IonFSException("Please provide a key for decrypting the data (--key/--passphase)");
 
                 using MemoryStream ms = new MemoryStream();
-                await LoadStreamFromIonburst(metadata, ids, ms);
+                await LoadStreamFromIonburst(metadata, ids, ms, mh);
 
                 using (Aes a = Aes.Create())
                 {
@@ -375,13 +454,22 @@ namespace Ionburst.Apps.IonFS
                     ICryptoTransform decryptor = a.CreateDecryptor(a.Key, a.IV);
                     var encrypted = ms.ToArray();
 
-                    using FileStream fs = File.Open(to.FullName, FileMode.Create);
                     var decrypted = decryptor.TransformFinalBlock(encrypted, 0, encrypted.Length);
-                    fs.Write(decrypted, 0, decrypted.Length);
+
+                    if (to.IsText)
+                    {
+                        ms.Position = 0;
+                        to.Text = Encoding.Default.GetString(decrypted);
+                    }
+                    else
+                    {
+                        using FileStream fs = File.Open(to.FullName, FileMode.Create);
+                        fs.Write(decrypted, 0, decrypted.Length);
+                    }
                 }
             }
 
-            if (ids.All(id => id.Value == 200))
+            if (ids.All(id => id.Value == 200) && !to.IsText)
             {
                 using (MemoryStream data = new MemoryStream(File.ReadAllBytes(to.FullName)))
                 {
@@ -406,7 +494,7 @@ namespace Ionburst.Apps.IonFS
             return ids;
         }
 
-        private async Task LoadStreamFromIonburst(IonFSMetadata metadata, Dictionary<Guid, int> ids, Stream stream)
+        private async Task LoadStreamFromIonburst(IonFSMetadata metadata, Dictionary<Guid, int> ids, Stream stream, IIonFSMetadata mh)
         {
             foreach (var id in metadata.Id)
             {
@@ -415,7 +503,17 @@ namespace Ionburst.Apps.IonFS
                     Particle = id.ToString()
                 };
 
-                ion.GetObjectResult getObjectResult = await GetIonburst().GetAsync(getObjectRequest);
+                ion.GetObjectResult getObjectResult; 
+
+                if (mh.Usage == "Secrets")
+                {
+                    getObjectResult = await GetIonburst().SecretsGetAsync(getObjectRequest);
+                }
+                else 
+                { 
+                    getObjectResult = await GetIonburst().GetAsync(getObjectRequest); 
+                }
+
                 ids.Add(id, getObjectResult.StatusCode);
 
                 if (getObjectResult.StatusCode == 200)
@@ -598,7 +696,7 @@ namespace Ionburst.Apps.IonFS
         public IonFSObject FromRemoteFolder(string? folder, bool autoAddDelimiter = true)
         {
             string fs = "ion://";
-            bool isRemote = false;
+            bool isRemote = true;
 
             if (string.IsNullOrEmpty(folder) || folder is null)
                 return new IonFSObject { FS = fs, Name = "", Path = "", IsFolder = true, IsRoot = true, IsRemote = isRemote, HasRepository = false };
@@ -619,13 +717,19 @@ namespace Ionburst.Apps.IonFS
                 string firstElement = path.Substring(0, path.IndexOf('/', StringComparison.Ordinal));
                 string repo = "";
                 bool hasRepo = false;
+                bool isRoot = false;
                 if (Repositories != null && Repositories.Any(r => r.Repository == firstElement))
                 {
                     repo = firstElement;
                     path = path.Replace(repo + "/", "", StringComparison.Ordinal);
                     hasRepo = true;
+                    if (string.IsNullOrEmpty(path))
+                    {
+                        isRoot = true;
+                        path = "/";
+                    }
                 }
-                IonFSObject fso = new IonFSObject { FS = fs, Repository = repo, Name = "", Path = path, IsFolder = true, IsRoot = false, IsRemote = true, HasRepository = hasRepo };
+                IonFSObject fso = new IonFSObject { FS = fs, Repository = repo, Name = "", Path = path, IsFolder = true, IsFile = false, IsRoot = isRoot, IsText = false, IsRemote = true, HasRepository = hasRepo };
                 return fso;
             }
             else
@@ -651,15 +755,19 @@ namespace Ionburst.Apps.IonFS
                 throw new ArgumentNullException(nameof(path), "path cannot be Null or Empty.");
 
             IonFSObject fso = FromRemoteFolder(path);
+            fso.IsText = false;
+
             if (string.IsNullOrEmpty(file))
             {
                 fso.Name = "";
                 fso.IsFolder = true;
+                fso.IsFile = false;
             }
             else
             {
                 fso.Name = file;
                 fso.IsFolder = false;
+                fso.IsFile = true;
             }
 
             return fso;
@@ -677,7 +785,7 @@ namespace Ionburst.Apps.IonFS
         // Internal tools for lower level interaction with ionburst directly
         // - use with care
 
-        internal async Task RemoveById(Guid gid)
+        public async Task RemoveById(Guid gid)
         {
             if (gid == null)
                 throw new ArgumentNullException(nameof(gid));
@@ -695,14 +803,14 @@ namespace Ionburst.Apps.IonFS
                 throw new IonFSException($"Ionburst Delete operation returned Non 200 StatusCode {delResult.StatusCode}");
         }
 
-        internal async Task RemoveMetadata(IonFSObject fso)
+        public async Task RemoveMetadata(IonFSObject fso)
         {
             IIonFSMetadata mh = GetMetadataHandler(fso);
 
             await mh.DelMetadata(fso);
         }
 
-        internal async Task GetChunk(Guid gid)
+        public async Task<Dictionary<Guid, int>> GetChunk(Guid gid)
         {
             if (gid == null)
                 throw new ArgumentNullException(nameof(gid));
@@ -714,7 +822,10 @@ namespace Ionburst.Apps.IonFS
                 Particle = gid.ToString()
             };
 
+            Dictionary<Guid, int> ids = new Dictionary<Guid, int>();
+
             ion.GetObjectResult getObjectResult = await GetIonburst().GetAsync(getObjectRequest);
+            ids.Add(gid, getObjectResult.StatusCode);
 
             if (getObjectResult.StatusCode == 200)
             {
@@ -730,6 +841,21 @@ namespace Ionburst.Apps.IonFS
                     }
                 }
             }
+
+            return ids;
+        }
+
+        // Public implementation of Dispose pattern callable by consumers.
+        public void Dispose()
+        {
+            Dispose(true);
+            GC.SuppressFinalize(this);
+        }
+
+        // Protected implementation of Dispose pattern.
+        protected virtual void Dispose(bool disposing)
+        {
+            return;
         }
     }
 }

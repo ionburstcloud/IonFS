@@ -1,13 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
+    <OutputType>Library</OutputType>
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Authors>Jamie Hunter</Authors>
-    <Company>Ionburst Limited</Company>
+    <Company>Ionburst</Company>
     <Product>IonFS</Product>
     <PackageId>Ionburst.IonFS</PackageId>
-    <AssemblyName>IonFS</AssemblyName>
+    <AssemblyName>Ionburst.Apps.IonFS</AssemblyName>
     <Configurations>Release;Debug</Configurations>
   </PropertyGroup>
 
@@ -17,24 +17,26 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="AWSSDK.Extensions.NETCore.Setup" Version="3.7.0.1" />
-    <PackageReference Include="AWSSDK.S3" Version="3.7.1.14" />
+    <Compile Remove="Program.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\.editorconfig" Link=".editorconfig" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="Ionburst.SDK" Version="1.2.4" />
     <PackageReference Include="Microsoft.CodeAnalysis.FxCopAnalyzers" Version="3.3.2">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="MongoDB.Driver" Version="2.13.0" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20574.7" />
     <PackageReference Include="System.Runtime.Extensions" Version="4.3.1" />
-    <PackageReference Include="Figgle" Version="0.4.0" />
   </ItemGroup>
 
   <ItemGroup>
-    <None Update="appsettings.json">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-            <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
-    </None>
+    <ProjectReference Include="..\Ionburst.Apps.IonFS.Model\Ionburst.Apps.IonFS.Model.csproj" />
+    <ProjectReference Include="..\Ionburst.Apps.IonFS.Repo.MongoDB\Ionburst.Apps.IonFS.Repo.MongoDB.csproj" />
+    <ProjectReference Include="..\Ionburst.Apps.IonFS.Repo.S3\Ionburst.Apps.IonFS.Repo.S3.csproj" />
   </ItemGroup>
 
 </Project>

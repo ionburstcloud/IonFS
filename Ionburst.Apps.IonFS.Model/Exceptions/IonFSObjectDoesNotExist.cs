@@ -1,5 +1,7 @@
 ﻿using System;
 
+using Ionburst.Apps.IonFS.Model;
+
 namespace Ionburst.Apps.IonFS.Exceptions
 {
     public class IonFSObjectDoesNotExist : IonFSException

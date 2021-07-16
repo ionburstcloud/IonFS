@@ -1,4 +1,11 @@
+// Copyright Ionburst Limited 2018-2021
+
 using Xunit;
+
+using Ionburst.Apps.IonFS.Model;
+
+using Ionburst.Apps.IonFS.Repo.S3;
+using Ionburst.Apps.IonFS.Repo.Mongo;
 
 namespace Ionburst.Apps.IonFS.Tests
 {

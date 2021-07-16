@@ -1,17 +1,26 @@
-﻿using System;
+﻿// Copyright Ionburst Limited 2018-2021
+
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.Linq;
 
+using Ionburst.Apps.IonFS;
 using Ionburst.Apps.IonFS.Model;
 using Ionburst.Apps.IonFS.Exceptions;
 using Figgle;
+using System.Reflection;
 
-namespace Ionburst.Apps.IonFS
+namespace IonFS
 {
     class Program
     {
+        private static Command Secrets()
+        {
+            Command command = new Command("secrets", "ssshhh");
+            return command;
+        }
         private static Command List()
         {
             Command command = new Command("list", "show the contents of a remote path, prefix remote paths with ion://");
@@ -28,19 +37,40 @@ namespace Ionburst.Apps.IonFS
 
                     List<IonFSObject> items = await fs.ListAsync(fso, recursive);
 
-                    Console.WriteLine($"Directory of {fso}\n");
-                    if (items.Count == 0) 
-                    { 
-                        Console.WriteLine(" Remote directory is empty");
+                    if (!fso.IsSecret)
+                    {
+                        Console.WriteLine($"Directory of {fso}\n");
+                        if (items.Count == 0)
+                        {
+                            Console.WriteLine(" Remote directory is empty");
+                        }
+                        else
+                        {
+                            int maxLen = items.Max(i => i.FullName.Length);
+                            foreach (var item in items)
+                            {
+                                Console.WriteLine("{0} {1} {2}",
+                                    item.IsFolder ? "d" : " ", item.FullName.PadRight(maxLen + 2, ' '),
+                                    !item.IsFolder ? item.LastModified.ToString() : "");
+                            }
+                        }
                     }
                     else
                     {
-                        int maxLen = items.Max(i => i.FullName.Length);
-                        foreach (var item in items)
+                        Console.WriteLine($"Secrets Repo of {fso}\n");
+                        if (items.Count == 0)
                         {
-                            Console.WriteLine("{0} {1} {2}",
-                                item.IsFolder ? "d" : " ", item.FullName.PadRight(maxLen + 2, ' '),
-                                !item.IsFolder ? item.LastModified.ToString() : "");
+                            Console.WriteLine(" Remote Secrets repository is empty");
+                        }
+                        else
+                        {
+                            int maxLen = items.Max(i => i.FullName.Length);
+                            foreach (var item in items)
+                            {
+                                Console.WriteLine("{0} {1} {2}",
+                                    item.IsFolder ? "d" : " ", item.FullName.PadRight(maxLen + 2, ' '),
+                                    !item.IsFolder ? item.LastModified.ToString() : "");
+                            }
                         }
                     }
                 }
@@ -94,7 +124,7 @@ namespace Ionburst.Apps.IonFS
                     var results = await fs.GetAsync(fromFso, toFso);
                     if (!results.All(r => r.Value == 200))
                     {
-                        Console.WriteLine($"Error receiving data Ionburst!");
+                        Console.WriteLine($"Error receiving data from Ionburst!");
                         foreach (var r in results)
                             Console.WriteLine($" {r.Key} {r.Value}");
                     }
@@ -127,7 +157,8 @@ namespace Ionburst.Apps.IonFS
             command.AddOption(new Option(new[] { "--verbose", "-v" }));
             command.AddOption(new Option(new[] { "--key", "-k" }, "path to symmetric key") { Argument = new Argument<string>("key", "path to private key") { Arity = ArgumentArity.ExactlyOne } });
             command.AddOption(new Option(new[] { "--passphrase", "-pp" }, "passphrase to generate key") { Argument = new Argument<string>("key", "path to private key") { Arity = ArgumentArity.ExactlyOne } });
-            command.Handler = CommandHandler.Create<string, string, string, string, bool, string, string>(async (localfile, folder, name, classification, verbose, key, passphrase) =>
+            command.AddOption(new Option(new[] { "--blocksize", "-bs" }, "block size") { Argument = new Argument<int>("size", "size in bytes") { Arity = ArgumentArity.ZeroOrOne } });
+            command.Handler = CommandHandler.Create<string, string, string, string, bool, string, string, long>(async (localfile, folder, name, classification, verbose, key, passphrase, blocksize) =>
             {
                 try
                 {
@@ -139,6 +170,10 @@ namespace Ionburst.Apps.IonFS
 
                     IonburstFS fs = new IonburstFS();
                     fs.Verbose = verbose;
+                    if (blocksize > 0)
+                    {
+                        fs.MaxSize = blocksize; 
+                    }
 
                     if (!string.IsNullOrEmpty(key))
                     {
@@ -170,7 +205,7 @@ namespace Ionburst.Apps.IonFS
                     if (fsoFrom.IsFolder)
                     {
                         Console.WriteLine("Cannot put a directory (yet)");
-                        return 1;
+                        return;
                     }
 
                     if (!string.IsNullOrEmpty(classification))
@@ -180,12 +215,149 @@ namespace Ionburst.Apps.IonFS
                     
                     if (!results.All(r => r.Value == 200))
                     {
-                        Console.WriteLine($"Error sending data to Ionburst!");
+                        Console.WriteLine($"Error sending data to Ionburst Cloud!");
                         foreach (var r in results)
                             Console.WriteLine($" {r.Key} {r.Value}");
                     }
                 }
                 catch (RemoteFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            });
+
+            return command;
+        }
+
+        private static Command SecretPut()
+        {
+            Command command = new Command("put", "store data, prefix remote paths with ion://");
+            command.AddArgument(new Argument<string>("data", "data to store") { Arity = ArgumentArity.ExactlyOne });
+            command.AddArgument(new Argument<string>("vault", "destination vault location, prefixed with ion://") { Arity = ArgumentArity.ExactlyOne });
+            command.AddArgument(new Argument<string>("name", "name of secret") { Arity = ArgumentArity.ExactlyOne });
+            command.AddOption(new Option(new[] { "--classification", "-c" }) { Argument = new Argument<string>("classification", "Ionburst Cloud Classification") { Arity = ArgumentArity.ExactlyOne } });
+            command.AddOption(new Option(new[] { "--verbose", "-v" }));
+            command.AddOption(new Option(new[] { "--key", "-k" }, "path to symmetric key") { Argument = new Argument<string>("key", "path to private key") { Arity = ArgumentArity.ExactlyOne } });
+            command.AddOption(new Option(new[] { "--passphrase", "-pp" }, "passphrase to generate key") { Argument = new Argument<string>("key", "path to private key") { Arity = ArgumentArity.ExactlyOne } });
+            command.Handler = CommandHandler.Create<string, string, string, string, bool, string, string>(async (data, vault, name, classification, verbose, key, passphrase) =>
+            {
+                IonburstFS fs = new IonburstFS();
+                fs.Verbose = verbose;
+
+                if (!string.IsNullOrEmpty(key))
+                {
+                    IonFSCrypto crypto = new IonFSCrypto();
+                    crypto.KeyFromFile(key);
+
+                    fs.Encrypt = true;
+                    fs.KeyPath = key;
+                    fs.Crypto = crypto;
+                }
+                else if (!string.IsNullOrEmpty(passphrase))
+                {
+                    IonFSCrypto crypto = new IonFSCrypto();
+                    crypto.KeyFromPassphrase(passphrase);
+
+                    fs.Encrypt = true;
+                    fs.Crypto = crypto;
+                }
+
+                IonFSObject fsoFrom = new IonFSObject() { Text = data, IsText = true };
+                IonFSObject fsoTo = fs.FromRemoteFolder(vault);
+                string toName = "";
+                if (!string.IsNullOrEmpty(name))
+                    toName = name;
+                else
+                    throw new IonFSException("name parameter is blank");
+
+                IonFSObject fsoNewTo = fs.FromRemoteFile(fsoTo.FullFSName + toName);
+
+
+                if (!string.IsNullOrEmpty(classification))
+                    fs.Classification = classification;
+
+                try
+                {
+                    var results = await fs.PutAsync(fsoFrom, fsoNewTo);
+
+                    if (!results.All(r => r.Value == 200))
+                    {
+                        Console.WriteLine($"Error sending data to Ionburst Cloud!");
+                        foreach (var r in results)
+                            Console.WriteLine($" {r.Key} {r.Value}");
+                    }
+                }
+                catch (IonFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            });
+
+
+            return command;
+        }
+
+        private static Command SecretGet()
+        {
+            Command command = new Command("get", "retrieve data, prefix remote paths with ion://");
+            command.AddArgument(new Argument<string>("from") { Arity = ArgumentArity.ExactlyOne });
+            command.AddOption(new Option(new[] { "--verbose", "-v" }));
+            command.AddOption(new Option(new[] { "--key", "-k" }, "path to symmetric key") { Argument = new Argument<string>("key", "path to private key") { Arity = ArgumentArity.ExactlyOne } });
+            command.AddOption(new Option(new[] { "--passphrase", "-pp" }, "passphrase to generate key") { Argument = new Argument<string>("key", "path to private key") { Arity = ArgumentArity.ExactlyOne } });
+            command.Handler = CommandHandler.Create<string, bool, string, string>(async (from, verbose, key, passphrase) =>
+            {
+                try
+                {
+                    if (string.IsNullOrEmpty(from))
+                        throw new ArgumentNullException(nameof(from));
+
+                    IonburstFS fs = new IonburstFS { Verbose = verbose };
+
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        IonFSCrypto crypto = new IonFSCrypto();
+                        crypto.KeyFromFile(key);
+
+                        fs.Encrypt = true;
+                        fs.KeyPath = key;
+                        fs.Crypto = crypto;
+                    }
+                    else if (!string.IsNullOrEmpty(passphrase))
+                    {
+                        IonFSCrypto crypto = new IonFSCrypto();
+                        crypto.KeyFromPassphrase(passphrase);
+
+                        fs.Encrypt = true;
+                        fs.Crypto = crypto;
+                    }
+
+                    IonFSObject fromFso = fs.FromRemoteFile(from);
+                    IonFSObject toFso = new IonFSObject() { IsText = true };
+
+                    var results = await fs.GetAsync(fromFso, toFso);
+                    
+                    Console.WriteLine(toFso.Text);
+
+                    if (!results.All(r => r.Value == 200))
+                    {
+                        Console.WriteLine($"Error receiving data from Ionburst Cloud!");
+                        foreach (var r in results)
+                            Console.WriteLine($" {r.Key} {r.Value}");
+                    }
+                }
+                catch (RemoteFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                catch (IonFSChecksumException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                catch (IonFSException e)
                 {
                     Console.WriteLine(e.Message);
                 }
@@ -218,7 +390,52 @@ namespace Ionburst.Apps.IonFS
                         var results = await fs.DelAsync(fso);
                         if (!results.All(r => r.Value == 200))
                         {
-                            Console.WriteLine($"Error removing data Ionburst!");
+                            Console.WriteLine($"Error removing data from Ionburst Cloud!");
+                            foreach (var r in results)
+                                Console.WriteLine($" {r.Key} {r.Value}");
+                        }
+                    }
+
+                }
+                catch (RemoteFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                    return 1;
+                }
+                catch (IonFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                    return 1;
+                }
+                return 0;
+            });
+
+            return command;
+        }
+
+        private static Command SecretDel()
+        {
+            Command command = new Command("del", "delete an object, prefix remote paths with ion://");
+            command.AddArgument(new Argument<string>("data", "data to remove") { Arity = ArgumentArity.ExactlyOne });
+            command.AddOption(new Option(new[] { "--verbose", "-v" }));
+            command.Handler = CommandHandler.Create<string, bool>(async (data, verbose) =>
+            {
+                try
+                {
+                    if (string.IsNullOrEmpty(data))
+                        throw new ArgumentNullException(nameof(data));
+
+                    IonburstFS fs = new IonburstFS() { Verbose = verbose };
+                    IonFSObject fso = fs.FromRemoteFile(data);
+
+                    if (fso.IsFolder)
+                        await fs.DeleteDirAsync(fso, false);
+                    else
+                    {
+                        var results = await fs.DelAsync(fso);
+                        if (!results.All(r => r.Value == 200))
+                        {
+                            Console.WriteLine($"Error removing data from Ionburst Cloud!");
                             foreach (var r in results)
                                 Console.WriteLine($" {r.Key} {r.Value}");
                         }
@@ -443,7 +660,7 @@ namespace Ionburst.Apps.IonFS
 
                 if (!results.All(r => r.Value == 200))
                 {
-                    Console.WriteLine($"Error receiving data Ionburst!");
+                    Console.WriteLine($"Error receiving data from Ionburst Cloud!");
                     foreach (var r in results)
                         Console.WriteLine($" {r.Key} {r.Value}");
                 }
@@ -546,14 +763,14 @@ namespace Ionburst.Apps.IonFS
 
         private static Command GetClassifications()
         {
-            Command command = new Command("policy", "list the current Ionburst Classification Policies") { IsHidden = false };
+            Command command = new Command("policy", "list the current Ionburst Cloud Classification Policies") { IsHidden = false };
             command.Handler = CommandHandler.Create(async () =>
             {
                 try
                 {
                     IonburstFS fs = new IonburstFS();
 
-                    Console.WriteLine(FiggleFonts.Slant.Render("IonFS"));
+                    Console.WriteLine(Logo());
 
                     var classifications = await fs.GetClassifications();
 
@@ -585,13 +802,13 @@ namespace Ionburst.Apps.IonFS
                 {
                     IonburstFS fs = new IonburstFS();
 
-                    Console.WriteLine(FiggleFonts.Slant.Render("IonFS"));
+                    Console.WriteLine(Logo());
                     Console.WriteLine($"Available Repositories (*default):\n");
 
                     List<IonFSRepository> repos = fs.Repositories;
                     foreach (var r in repos)
                     {
-                        Console.WriteLine($" {(r.IsDefault?"*":" ")} {"ion://"+r.Repository+"/",-32} ({r.Metadata.GetType()})");
+                        Console.WriteLine($" {(r.IsDefault?"*":" ")} [{r.Usage.Substring(0,1).ToLower()}] {"ion://"+r.Repository+"/",-32} ({r.Metadata.GetType()})");
                     }
                 }
                 catch (IonFSException e)
@@ -628,22 +845,30 @@ namespace Ionburst.Apps.IonFS
             return command;
         }
 
+        private static String Logo()
+        {
+            string ver = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+
+            return
+                @"     ____            ___________" + "\n" +
+                @"    /  _/___  ____  / ____/ ___/" + "\n" +
+                @"    / // __ \/ __ \/ /_   \__ \" + "\n" +
+                @"  _/ // /_/ / / / / __/  ___/ /" + "\n" +
+                @" /___/\____/_/ /_/_/    /____/     v" + ver + "\n\n";
+        }
+
         [System.Diagnostics.CodeAnalysis.SuppressMessage("Design", "CA1031:Do not catch general exception types", Justification = "Main Program")]
         public static void Main(string[] args)
         {
             try
             {
-                var command = new RootCommand("Securing your data on Ionburst.");
+                var command = new RootCommand("Securing your data on Ionburst Cloud.");
                 command.AddOption(new Option(new[] { "--version", "-v" }));
                 command.Handler = CommandHandler.Create<IConsole, bool>((console, version) =>
                 {
-                    string shield = "\U0001f6e1";
-                    string scotland = "\U0001F3F4\U000E0067\U000E0062\U000E0073\U000E0063\U000E0074\U000E007F";
-
-                    Console.WriteLine(FiggleFonts.Slant.Render("IonFS"));
-                    Console.WriteLine($"We may guard {shield} your data, but we'll never take its freedom {scotland}!");
+                    Console.WriteLine(Logo());
+                    Console.WriteLine($"We may guard your data, but we'll never take its freedom!");
                     Console.WriteLine("\nUsage: IonFS --help");
-
                     Console.WriteLine();
 
                     if (version)
@@ -652,7 +877,7 @@ namespace Ionburst.Apps.IonFS
                         {
                             IonburstFS ionburst = new IonburstFS();
 
-                            Console.WriteLine(" Ionburst {1} is {0}\n", (ionburst.IonburstStatus) ? "Online" : "Offline", ionburst.IonburstUri);
+                            Console.WriteLine(" Ionburst Cloud {1} is {0}\n", (ionburst.IonburstStatus) ? "Online" : "Offline", ionburst.IonburstUri);
                             foreach (var v in ionburst.IonburstVersion)
                             {
                                 Console.WriteLine($" {v}");
@@ -685,6 +910,14 @@ namespace Ionburst.Apps.IonFS
                 command.AddCommand(GetRepos());
                 command.AddCommand(KeyGen());
                 #endregion
+
+                Command secrets = Secrets();
+                {
+                    secrets.AddCommand(SecretPut());
+                    secrets.AddCommand(SecretGet());
+                    secrets.AddCommand(SecretDel());
+                }
+                command.AddCommand(secrets);
 
                 command.InvokeAsync(args).Wait();
             }

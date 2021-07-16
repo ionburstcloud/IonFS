@@ -1,4 +1,5 @@
-﻿// Copyright Ionburst Limited 2020
+﻿// Copyright Ionburst Limited 2018-2021
+
 using System;
 using System.IO;
 using System.Threading.Tasks;
@@ -10,8 +11,9 @@ using s3 = Amazon.S3.Model;
 using System.Collections.Generic;
 
 using Ionburst.Apps.IonFS.Exceptions;
+using Ionburst.Apps.IonFS.Model;
 
-namespace Ionburst.Apps.IonFS
+namespace Ionburst.Apps.IonFS.Repo.S3
 {
     public class MetadataS3 : IIonFSMetadata
     {
@@ -19,15 +21,17 @@ namespace Ionburst.Apps.IonFS
 
         public bool Verbose { get; set; } = false;
         public string RepositoryName { get; set; }
+        public string Usage { get; set; }
 
         public MetadataS3()
         {
             s3 = new S3Wrapper();
         }
 
-        public MetadataS3(string bucketName, string repoName)
+        public MetadataS3(string bucketName, string repoName, string repoUsage)
         {
             RepositoryName = repoName;
+            Usage = repoUsage;
             s3 = new S3Wrapper();
             s3.SetBucket(bucketName);
         }
@@ -88,11 +92,13 @@ namespace Ionburst.Apps.IonFS
                 };
                 s3.ListObjectsV2Response response;
 
-                response = await s3.S3.ListObjectsV2Async(request);
+                var t = s3.S3;
+                response = t.ListObjectsV2Async(request).Result;
 
                 if (fso.IsRoot && fso.IsFolder)
                     exists = true;
-                else if (response.S3Objects.Exists(x => x.Key == fso.FullName) && !fso.IsFolder)
+
+                if (response.S3Objects.Exists(x => x.Key == fso.FullName) && !fso.IsFolder)
                     exists = true;
                 else if (response.S3Objects.Exists(x => x.Key == fso.Path) && fso.IsFolder)
                     exists = true;
@@ -100,6 +106,10 @@ namespace Ionburst.Apps.IonFS
             catch (AmazonS3Exception e)
             {
                 throw new IonFSException("S3 Exception", fso, e);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e.Message);
             }
 
             return exists;
@@ -126,7 +136,7 @@ namespace Ionburst.Apps.IonFS
                 s3.ListObjectsV2Request request = new s3.ListObjectsV2Request
                 {
                     BucketName = s3.GetBucket(),
-                    Prefix = folder.Path,
+                    Prefix = folder.IsRoot?"":folder.Path,
                     Delimiter = recursive?"":@"/"
                 };
                 s3.ListObjectsV2Response response;
@@ -250,7 +260,9 @@ namespace Ionburst.Apps.IonFS
                         ContentBody = JsonConvert.SerializeObject(metadata)
                     };
 
-                    s3.PutObjectResponse response = await s3.S3.PutObjectAsync(s3PutRequest);
+                    var t = s3.S3;
+                    s3.PutObjectResponse response = t.PutObjectAsync(s3PutRequest).Result;
+                    //s3.PutObjectResponse response = await s3.S3.PutObjectAsync(s3PutRequest);
 
                     if (Verbose) Console.WriteLine(JsonConvert.SerializeObject(metadata));
                 }
