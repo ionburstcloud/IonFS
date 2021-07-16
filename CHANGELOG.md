@@ -2,6 +2,17 @@
 
 <!--- next entry here -->
 
+## 0.2.0
+2021-07-16
+
+### Features
+
+- add secrets functionality to ionfs (courtesy of @jamiejshunter) (ba8f5aff22645244503f22e0c9d09eecff439a50)
+
+### Fixes
+
+- README updates (5dfc6504e97b68fa4452b006baf82ed79dfac416)
+
 ## 0.2.0-develop.1
 2021-07-15
 
