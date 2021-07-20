@@ -847,7 +847,8 @@ namespace IonFS
 
         private static String Logo()
         {
-            string ver = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            //string ver = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+            string ver = Assembly.GetEntryAssembly().GetCustomAttribute<AssemblyInformationalVersionAttribute>().InformationalVersion;
 
             return
                 @"     ____            ___________" + "\n" +
