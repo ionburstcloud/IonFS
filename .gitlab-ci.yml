@@ -25,9 +25,9 @@ build_windows:
  before_script:
   - cat build_info
   - . build_info
-  - echo "Release version is: $RELEASE_VERSION"
+  - 'echo "Release version is: $RELEASE_VERSION"'
   - export $ASSEMBLY_VERSION=$(echo $RELEASE_VERSION | cut -d "-" -f1)
-  - echo "Assembly version is: $ASSEMBLY_VERSION"
+  - 'echo "Assembly version is: $ASSEMBLY_VERSION"'
   - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
   - 'cd IonFS'
   - cat $MINISIGN > minisign.key
@@ -61,7 +61,7 @@ build_mac:
  before_script:
   - cat build_info
   - . build_info
-  - echo $RELEASE_VERSION
+  - 'echo "Release version is: $RELEASE_VERSION"'
   - export $ASSEMBLY_VERSION=$(echo $RELEASE_VERSION | cut -d "-" -f1)
   - echo "Assembly version is: $ASSEMBLY_VERSION"
   - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
@@ -97,7 +97,7 @@ build_linux:
  before_script:
   - cat build_info
   - . build_info
-  - echo $RELEASE_VERSION
+  - 'echo "Release version is: $RELEASE_VERSION"'
   - export $ASSEMBLY_VERSION=$(echo $RELEASE_VERSION | cut -d "-" -f1)
   - echo "Assembly version is: $ASSEMBLY_VERSION"
   - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
@@ -133,7 +133,7 @@ build_linux_arm64:
  before_script:
   - cat build_info
   - . build_info
-  - echo $RELEASE_VERSION
+  - 'echo "Release version is: $RELEASE_VERSION"'
   - export $ASSEMBLY_VERSION=$(echo $RELEASE_VERSION | cut -d "-" -f1)
   - echo "Assembly version is: $ASSEMBLY_VERSION"
   - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
