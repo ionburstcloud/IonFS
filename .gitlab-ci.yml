@@ -37,7 +37,7 @@ build_windows:
  script:
   - 'dotnet build -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION'
   - 'dotnet publish -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime win-x64'
-  - 'cp -R bin/Release/netcoreapp3.1/win-x64/publish .'
+  - 'cp -R bin/Release/net5.0/win-x64/publish .'
   - 'ls -lah publish'
   - 'mv publish/IonFS.exe publish/ionfs.exe'
   - 'cd publish'
@@ -73,7 +73,7 @@ build_mac:
  script:
   - 'dotnet build -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION'
   - 'dotnet publish -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime osx-x64'
-  - 'cp -R bin/Release/netcoreapp3.1/osx-x64/publish .'
+  - 'cp -R bin/Release/net5.0/osx-x64/publish .'
   - 'ls -lah publish'
   - 'mv publish/IonFS publish/ionfs'
   - 'cd publish'
@@ -109,7 +109,7 @@ build_linux:
  script:
   - 'dotnet build -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION'
   - 'dotnet publish -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime linux-x64'
-  - 'cp -R bin/Release/netcoreapp3.1/linux-x64/publish .'
+  - 'cp -R bin/Release/net5.0/linux-x64/publish .'
   - 'ls -lah publish'
   - 'mv publish/IonFS publish/ionfs'
   - 'cd publish'
@@ -145,7 +145,7 @@ build_linux_arm64:
  script:
   - 'dotnet build -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION'
   - 'dotnet publish -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime linux-arm64'
-  - 'cp -R bin/Release/netcoreapp3.1/linux-arm64/publish .'
+  - 'cp -R bin/Release/net5.0/linux-arm64/publish .'
   - 'ls -lah publish'
   - 'mv publish/IonFS publish/ionfs'
   - 'cd publish'
