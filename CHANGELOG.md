@@ -2,6 +2,13 @@
 
 <!--- next entry here -->
 
+## 0.2.1
+2021-07-21
+
+### Fixes
+
+- swap method used to get ionfs version (02014db4c0ed403703a4e80f2da77f99cc70c90b)
+
 ## 0.2.1-develop.1
 2021-07-20
 
