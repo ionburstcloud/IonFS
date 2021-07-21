@@ -8,6 +8,7 @@
     <Product>IonFS</Product>
     <AssemblyName>IonFS</AssemblyName>
     <Configurations>Release;Debug</Configurations>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
   </PropertyGroup>
 
   <ItemGroup>
