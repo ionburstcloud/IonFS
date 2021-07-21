@@ -2,7 +2,11 @@
   "profiles": {
     "IonFS": {
       "commandName": "Project",
-      "commandLineArgs": "secrets get ion://second-S3/firstmessage"
+      "commandLineArgs": "--version",
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "old-commandLineArgs": "secrets get ion://second-S3/firstmessage"
     }
   }
 }

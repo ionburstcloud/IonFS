@@ -89,12 +89,18 @@ namespace Ionburst.Apps.IonFS
 
                 //Type t = Type.GetType(configuredRepository.Class, Assembly.LoadFrom(configuredRepository.Assembly), );
 
-                Assembly assem = Assembly.LoadFrom(configuredRepository.Assembly);
+                //Assembly assem = Assembly.LoadFrom(configuredRepository.Assembly);
+
+                AssemblyName assemName = new AssemblyName()
+                {
+                    Name = configuredRepository.Assembly
+                };
+                Assembly assem = Assembly.Load(assemName);
 
                 Type t = Type.GetType(configuredRepository.Class,
-                      (name) => Assembly.LoadFrom(configuredRepository.Assembly),
-                      (a, b, c) => assem.GetType(configuredRepository.Class, true, false)
-                     );
+                        (name) => Assembly.LoadFrom(configuredRepository.Assembly),
+                        (a, b, c) => assem.GetType(configuredRepository.Class, true, false)
+                        );
 
                 newRepository.Metadata = (IIonFSMetadata)Activator.CreateInstance(t, configuredRepository.DataStore, configuredRepository.Name, configuredRepository.Usage);
                 Repositories.Add(newRepository);
