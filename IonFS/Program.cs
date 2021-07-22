@@ -18,7 +18,7 @@ namespace IonFS
     {
         private static Command Secrets()
         {
-            Command command = new Command("secrets", "ssshhh");
+            Command command = new Command("secrets", "manage secrets");
             return command;
         }
         private static Command List()
@@ -99,7 +99,7 @@ namespace IonFS
                         throw new ArgumentNullException(nameof(from));
 
                     IonburstFS fs = new IonburstFS { Verbose = verbose };
-                    
+
                     if (!string.IsNullOrEmpty(key))
                     {
                         IonFSCrypto crypto = new IonFSCrypto();
@@ -172,7 +172,7 @@ namespace IonFS
                     fs.Verbose = verbose;
                     if (blocksize > 0)
                     {
-                        fs.MaxSize = blocksize; 
+                        fs.MaxSize = blocksize;
                     }
 
                     if (!string.IsNullOrEmpty(key))
@@ -183,7 +183,7 @@ namespace IonFS
                         fs.Encrypt = true;
                         fs.KeyPath = key;
                         fs.Crypto = crypto;
-                    } 
+                    }
                     else if (!string.IsNullOrEmpty(passphrase))
                     {
                         IonFSCrypto crypto = new IonFSCrypto();
@@ -212,7 +212,7 @@ namespace IonFS
                         fs.Classification = classification;
 
                     var results = await fs.PutAsync(fsoFrom, fsoNewTo);
-                    
+
                     if (!results.All(r => r.Value == 200))
                     {
                         Console.WriteLine($"Error sending data to Ionburst Cloud!");
@@ -236,7 +236,7 @@ namespace IonFS
         private static Command SecretPut()
         {
             Command command = new Command("put", "store data, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("data", "data to store") { Arity = ArgumentArity.ExactlyOne });
+            command.AddArgument(new Argument<string>("secret", "secret to store") { Arity = ArgumentArity.ExactlyOne });
             command.AddArgument(new Argument<string>("vault", "destination vault location, prefixed with ion://") { Arity = ArgumentArity.ExactlyOne });
             command.AddArgument(new Argument<string>("name", "name of secret") { Arity = ArgumentArity.ExactlyOne });
             command.AddOption(new Option(new[] { "--classification", "-c" }) { Argument = new Argument<string>("classification", "Ionburst Cloud Classification") { Arity = ArgumentArity.ExactlyOne } });
@@ -307,8 +307,8 @@ namespace IonFS
 
         private static Command SecretGet()
         {
-            Command command = new Command("get", "retrieve data, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("from") { Arity = ArgumentArity.ExactlyOne });
+            Command command = new Command("get", "retrieve secret, prefix remote paths with ion://");
+            command.AddArgument(new Argument<string>("name") { Arity = ArgumentArity.ExactlyOne });
             command.AddOption(new Option(new[] { "--verbose", "-v" }));
             command.AddOption(new Option(new[] { "--key", "-k" }, "path to symmetric key") { Argument = new Argument<string>("key", "path to private key") { Arity = ArgumentArity.ExactlyOne } });
             command.AddOption(new Option(new[] { "--passphrase", "-pp" }, "passphrase to generate key") { Argument = new Argument<string>("key", "path to private key") { Arity = ArgumentArity.ExactlyOne } });
@@ -343,7 +343,7 @@ namespace IonFS
                     IonFSObject toFso = new IonFSObject() { IsText = true };
 
                     var results = await fs.GetAsync(fromFso, toFso);
-                    
+
                     Console.WriteLine(toFso.Text);
 
                     if (!results.All(r => r.Value == 200))
@@ -419,8 +419,8 @@ namespace IonFS
 
         private static Command SecretDel()
         {
-            Command command = new Command("del", "delete an object, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("data", "data to remove") { Arity = ArgumentArity.ExactlyOne });
+            Command command = new Command("del", "delete a secret, prefix remote paths with ion://");
+            command.AddArgument(new Argument<string>("name", "secret to remove") { Arity = ArgumentArity.ExactlyOne });
             command.AddOption(new Option(new[] { "--verbose", "-v" }));
             command.Handler = CommandHandler.Create<string, bool>(async (data, verbose) =>
             {
@@ -640,7 +640,7 @@ namespace IonFS
             command.Handler = CommandHandler.Create<Guid>(async (guid) =>
             {
                 if (guid == null)
-                throw new ArgumentNullException(nameof(guid));
+                    throw new ArgumentNullException(nameof(guid));
 
                 IonburstFS fs = new IonburstFS();
                 await fs.RemoveById(guid);
@@ -812,7 +812,7 @@ namespace IonFS
                     List<IonFSRepository> repos = fs.Repositories;
                     foreach (var r in repos)
                     {
-                        Console.WriteLine($" {(r.IsDefault?"*":" ")} [{r.Usage.Substring(0,1).ToLower()}] {"ion://"+r.Repository+"/",-32} ({r.Metadata.GetType()})");
+                        Console.WriteLine($" {(r.IsDefault ? "*" : " ")} [{r.Usage.Substring(0, 1).ToLower()}] {"ion://" + r.Repository + "/",-32} ({r.Metadata.GetType()})");
                     }
                 }
                 catch (IonFSException e)
