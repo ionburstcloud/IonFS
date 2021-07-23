@@ -60,14 +60,18 @@ The IonFS section contains the main configuration items:
     "Repositories": [ 
       { 
         "Name": "first-S3", 
-        "Class": "Ionburst.Apps.IonFS.MetadataS3", 
+        "Usage": "Data",
+        "Class": "Ionburst.Apps.IonFS.Repo.S3.MetadataS3",
+        "Assembly": "Ionburst.Apps.IonFS.Repo.S3",
         "DataStore": "ionfs-metadata-first" 
       }, 
       { 
         "Name": "second-S3", 
-        "Class": "Ionburst.Apps.IonFS.MetadataS3", 
+        "Usage": "Secrets",
+        "Class": "Ionburst.Apps.IonFS.Repo.S3.MetadataS3",
+        "Assembly": "Ionburst.Apps.IonFS.Repo.S3",
         "DataStore": "ionfs-metadata-second" 
-      } 
+      }
     ],
     "DefaultRepository": "first-S3", 
   },
