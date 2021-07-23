@@ -2,6 +2,14 @@
 
 <!--- next entry here -->
 
+## 0.2.2
+2021-07-21
+
+### Fixes
+
+- incorporate @jamiejshunter final fix [ci-skip] (590f6091ae86093d8958b214562da45ce067b20f)
+- switch to .NET 5 (71ef48a84c5f3f829d4f3e7bf6e463144f45b2c1)
+
 ## 0.2.2-develop.1
 2021-07-21
 
