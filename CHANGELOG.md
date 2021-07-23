@@ -2,6 +2,14 @@
 
 <!--- next entry here -->
 
+## 0.2.3
+2021-07-23
+
+### Fixes
+
+- minor updates to command language (b5633fd58a689c2dfd37bb81a77e27340e81ed20)
+- minor formatting update for list (f6722970c493b01608bc24b9ffa90ccfeb303e3f)
+
 ## 0.2.3-develop.1
 2021-07-23
 
