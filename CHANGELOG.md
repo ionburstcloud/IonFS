@@ -2,6 +2,13 @@
 
 <!--- next entry here -->
 
+## 0.2.4-develop.1
+2021-07-28
+
+### Fixes
+
+- dependency updates for S3 and MongoDB (2a595af716b1704d219ea7b9c69b9d234bbbbc65)
+
 ## 0.2.3
 2021-07-23
 
