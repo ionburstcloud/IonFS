@@ -2,6 +2,13 @@
 
 <!--- next entry here -->
 
+## 0.2.5-develop.1
+2021-07-28
+
+### Fixes
+
+- add build for M1 macs - develop branch only (780378044dd7a1f0dca29c7ef3b1e3269cd30482)
+
 ## 0.2.4
 2021-07-28
 
