@@ -2,6 +2,13 @@
 
 <!--- next entry here -->
 
+## 0.2.5-develop.2
+2021-11-18
+
+### Fixes
+
+- update ionfs packages to net6.0 (bc20e17f6ade7f04cab6f90555f2b01cc4545d31)
+
 ## 0.2.5-develop.1
 2021-07-28
 
