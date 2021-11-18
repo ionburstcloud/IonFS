@@ -54,7 +54,7 @@ The IonFS section contains the main configuration items:
     }   
   },
   "IonFS": {
-    "MaxSize": "65536",
+    "MaxSize": "50000000",
     "Verbose": "false",
     "DefaultClassification": "Restricted",
     "Repositories": [ 
