@@ -8,6 +8,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitlab-ci.yml = .gitlab-ci.yml
 		.editorconfig = .editorconfig
 		README.md = README.md
+		allowed_signers = allowed_signers
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ionburst.Apps.IonFS.Model", "Ionburst.Apps.IonFS.Model\Ionburst.Apps.IonFS.Model.csproj", "{2396B3E3-EA79-4AB8-BAE8-174364989FAF}"
