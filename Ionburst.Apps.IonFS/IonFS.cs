@@ -196,7 +196,7 @@ namespace Ionburst.Apps.IonFS
                 Parallel.ForEach(items.FindAll(x => x.IsFolder), (item) => { DeleteDirAsync(item, recursive).Wait(); });
             }
             else
-                throw new IonFSException($"Folder '{folder}' must be empty, or use the --recursive option");
+                throw new IonFSException($"Folder '{folder}' must be empty, or the --recursive option can be used");
         }
 
         public async Task<HashSet<KeyValuePair<Guid, int>>> DelAsync(IonFSObject file)
@@ -314,6 +314,7 @@ namespace Ionburst.Apps.IonFS
                     metadata.Hash = Convert.ToBase64String(hashBytes);
                 }
 
+                // Begin splitting of large data
                 long size = data.Length;
                 long offset = MaxSize;
                 var bursts = new List<Burst>();

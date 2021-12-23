@@ -23,6 +23,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ionburst.Apps.IonFS.Repo.Mo
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ionburst.Apps.IonFS.Tests", "Ionburst.Apps.IonFS.Tests\Ionburst.Apps.IonFS.Tests.csproj", "{0435B679-2745-4EFF-A5E7-3302970C8129}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ionburst.Apps.IonFS.Repo.LocalFS", "Ionburst.Apps.IonFS.Repo.LocalFS\Ionburst.Apps.IonFS.Repo.LocalFS.csproj", "{FC39C840-D792-48F7-8683-893093DFF5C6}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -53,6 +55,10 @@ Global
 		{0435B679-2745-4EFF-A5E7-3302970C8129}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0435B679-2745-4EFF-A5E7-3302970C8129}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0435B679-2745-4EFF-A5E7-3302970C8129}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC39C840-D792-48F7-8683-893093DFF5C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC39C840-D792-48F7-8683-893093DFF5C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC39C840-D792-48F7-8683-893093DFF5C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC39C840-D792-48F7-8683-893093DFF5C6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

@@ -631,17 +631,19 @@ namespace IonFS
         {
             Command command = new Command("rmdir", "remove a folder, prefix remote paths with ion://");
             command.AddArgument(new Argument<string>("folder") {Arity = ArgumentArity.ExactlyOne});
-            command.Handler = CommandHandler.Create<string>(async (folder) =>
+            command.AddOption(new Option<bool>(new[] { "--verbose", "-v" }));
+            command.AddOption(new Option<bool>(new[] { "--recursive", "-r" }));
+            command.Handler = CommandHandler.Create<string, bool, bool>(async (folder, verbose, recursive) =>
             {
                 try
                 {
                     if (string.IsNullOrEmpty(folder))
                         throw new ArgumentNullException(nameof(folder));
 
-                    IonburstFS fs = new IonburstFS();
+                    IonburstFS fs = new IonburstFS() { Verbose = verbose };
                     IonFSObject fso = fs.FromRemoteFolder(folder);
 
-                    await fs.DeleteDirAsync(fso);
+                    await fs.DeleteDirAsync(fso, recursive);
                 }
                 catch (RemoteFSException e)
                 {

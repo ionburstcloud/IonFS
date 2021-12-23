@@ -34,7 +34,7 @@ namespace Ionburst.Apps.IonFS.Model
             get 
             { 
                 if (HasRepository)
-                    return $"{FS}{Repository}{Path}{Name}";
+                    return $"{FS}{Repository}/{Path}{Name}";
                 else
                     return $"{FS}{Path}{Name}"; 
             } 

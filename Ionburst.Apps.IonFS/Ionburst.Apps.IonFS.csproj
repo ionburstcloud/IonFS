@@ -38,6 +38,7 @@
     <ProjectReference Include="..\Ionburst.Apps.IonFS.Model\Ionburst.Apps.IonFS.Model.csproj" />
     <ProjectReference Include="..\Ionburst.Apps.IonFS.Repo.MongoDB\Ionburst.Apps.IonFS.Repo.MongoDB.csproj" />
     <ProjectReference Include="..\Ionburst.Apps.IonFS.Repo.S3\Ionburst.Apps.IonFS.Repo.S3.csproj" />
+    <ProjectReference Include="..\Ionburst.Apps.IonFS.Repo.LocalFS\Ionburst.Apps.IonFS.Repo.LocalFS.csproj" />
   </ItemGroup>
 
 </Project>
