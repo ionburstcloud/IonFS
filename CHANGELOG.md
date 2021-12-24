@@ -2,6 +2,14 @@
 
 <!--- next entry here -->
 
+## 0.2.5-develop.3
+2021-12-10
+
+### Fixes
+
+- update dependencies for .net6.0 (ca240815760a10892e25f56c48521db20c7b6c92)
+- add Microsoft.Extensions.Configuration.Binder for upgrade to net6.0 (3e8f19ba0bfcb4293b5e16591dc5c3e27e5a5eb0)
+
 ## 0.2.5-develop.2
 2021-11-18
 
