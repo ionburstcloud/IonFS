@@ -145,6 +145,7 @@ build_mac_arm64:
     - develop
   tags:
     - mac-arm64
+
 build_linux:
   stage: build_releases
   before_script:
@@ -223,22 +224,26 @@ publish:
     - cat build_info
     - . build_info
     - "if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_uri=https://ionfs.s3.fr-par.scw.cloud/develop; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_uri=https://ionfs.s3.fr-par.scw.cloud; echo $ionfs_path; fi;"
-    - echo "RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-linux.tar.bz2" >> build_info
-    - echo "RELEASE_SIG_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-linux.tar.bz2.minisig" >> build_info
     - echo "RELEASE_DESC=\"ionfs Linux amd64 binary\"" >> build_info
+    - echo "RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-linux.tar.bz2" >> build_info
     - echo "RELEASE_SIG_DESC=\"ionfs Linux amd64 binary signature\"" >> build_info
-    - echo "ARM64_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2" >> build_info
-    - echo "ARM64_SIG_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2.minisig" >> build_info
+    - echo "RELEASE_SIG_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-linux.tar.bz2.minisig" >> build_info
     - echo "ARM64_DESC=\"ionfs Linux arm64 binary\"" >> build_info
+    - echo "ARM64_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2" >> build_info
     - echo "ARM64_SIG_DESC=\"ionfs Linux arm64 binary signature\"" >> build_info
-    - echo "MAC_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-mac.tar.bz2" >> build_info
-    - echo "MAC_SIG_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-mac.tar.bz2.minisig" >> build_info
+    - echo "ARM64_SIG_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2.minisig" >> build_info
     - echo "MAC_DESC=\"ionfs Mac amd64 binary\"" >> build_info
+    - echo "MAC_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-mac.tar.bz2" >> build_info
     - echo "MAC_SIG_DESC=\"ionfs Mac amd64 binary signature\"" >> build_info
-    - echo "WIN_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-windows.tar.bz2" >> build_info
-    - echo "WIN_SIG_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-windows.tar.bz2.minisig" >> build_info
+    - echo "MAC_SIG_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-mac.tar.bz2.minisig" >> build_info
+    - echo "MAC_ARM64_DESC=\"ionfs Mac arm64 binary\"" >> build_info
+    - echo "MAC_ARM64_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-mac-arm64.tar.bz2" >> build_info
+    - echo "MAC_ARM64_SIG_DESC=\"ionfs Mac arm64 binary signature\"" >> build_info
+    - echo "MAC_ARM64_SIG_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-mac-arm64.tar.bz2.minisig" >> build_info
     - echo "WIN_DESC=\"ionfs Windows amd64 binary\"" >> build_info
+    - echo "WIN_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-windows.tar.bz2" >> build_info
     - echo "WIN_SIG_DESC=\"ionfs Windows amd64 binary signature\"" >> build_info
+    - echo "WIN_SIG_RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-windows.tar.bz2.minisig" >> build_info
     - . build_info
     - release changelog
     - release commit-and-tag CHANGELOG.md build_info
@@ -248,6 +253,8 @@ publish:
     - release --ci-commit-tag v$RELEASE_VERSION add-download-link -n release -u $ARM64_SIG_RELEASE_URL -d "$ARM64_SIG_DESC"
     - release --ci-commit-tag v$RELEASE_VERSION add-download-link -n release -u $MAC_RELEASE_URL -d "$MAC_DESC"
     - release --ci-commit-tag v$RELEASE_VERSION add-download-link -n release -u $MAC_SIG_RELEASE_URL -d "$MAC_SIG_DESC"
+    - release --ci-commit-tag v$RELEASE_VERSION add-download-link -n release -u $MAC_ARM64_RELEASE_URL -d "$MAC_ARM64_DESC"
+    - release --ci-commit-tag v$RELEASE_VERSION add-download-link -n release -u $MAC_ARM64_SIG_RELEASE_URL -d "$MAC_ARM64_SIG_DESC"
     - release --ci-commit-tag v$RELEASE_VERSION add-download-link -n release -u $WIN_RELEASE_URL -d "$WIN_DESC"
     - release --ci-commit-tag v$RELEASE_VERSION add-download-link -n release -u $WIN_SIG_RELEASE_URL -d "$WIN_SIG_DESC"
   only:
