@@ -5,7 +5,7 @@
 
 **IonFS CLI** has been developed to illustrate how a client application typically integrates with Ionburst Cloud. 
 
-IonFS provides a set of tools to manage data and secrets stored by Ionburst Cloud as if it were a remote filesystem. While IonFS stores primary data items within Ionburst Cloud, the metadata is stored in an S3 bucket.
+IonFS provides a set of tools to manage data and secrets stored by Ionburst Cloud as if it were a remote filesystem. While IonFS stores primary data items within Ionburst Cloud, the metadata is stored in an S3 bucket, MongoDB database or local filesystem.
 
 Anyone that has been granted access to this repository, and the appropriate Ionburst Cloud credentials, can interact with the stored data.
 A getting started tutorial for IonFS is available on the Ionburst Cloud website [here.](https://ionburst.cloud/tutorials/get-started-with-ionfs) 
@@ -19,7 +19,7 @@ IonFS:
   Securing your data on Ionburst Cloud. 
 
 Usage: 
-  IonFS [options] [command] 
+  ionfs [options] [command] 
 
 Options: 
   -v, --version 
@@ -36,6 +36,8 @@ Commands:
   rmdir <folder>              remove a folder, prefix remote paths with ion:// 
   policy                      list the current Ionburst Cloud Classification Policies 
   repos                       list the currently registered Repositories 
+  secrets                     manage secrets
+  
 ```
 
 ## Configuration
@@ -71,7 +73,7 @@ The IonFS section contains the main configuration items:
         "Class": "Ionburst.Apps.IonFS.Repo.S3.MetadataS3",
         "Assembly": "Ionburst.Apps.IonFS.Repo.S3",
         "DataStore": "ionfs-metadata-second" 
-      }
+      },
     ],
     "DefaultRepository": "first-S3", 
   },
@@ -97,7 +99,7 @@ The IonFS section contains the main configuration items:
 
 ## Getting Help
 
-Please use the following community resources to get help. We use [Gitlab issues][sdk-issues] to track bugs and feature requests.
+Please use the following community resources to get help. We use [GitLab issues][sdk-issues] to track bugs and feature requests.
 - Join the Ionburst Cloud community on [Slack](https://join.slack.com/t/ionburst-cloud/shared_invite/zt-panjkslf-Z5DOpU1OOeNPkXgklD~Cpg)
 - Get in touch with [Ionburst Support](https://ionburst.cloud/contact/)
 - If it turns out that you may have found a bug, please open an [issue][sdk-issues]
@@ -118,8 +120,8 @@ IonFS uses Semantic Versioning, e.g. MAJOR.MINOR.PATCH.
 
 [ionburst]: https://ionburst.io
 [ionburst-cloud]: https://ionburst.cloud
-[sdk-website]: https://ionburst.cloud/docs/sdk/
+[sdk-website]: https://docs.ionburst.cloud/sdk/
 [sdk-source]: https://gitlab.com/ionburst/ionfs
 [sdk-issues]: https://gitlab.com/ionburst/ionfs/issues
-[sdk-license]: https://gitlab.com/ionburst/ionfst/-/blob/master/LICENSE
-[docs-api]: https://ionburst.cloud/docs/api/
+[sdk-license]: https://gitlab.com/ionburst/ionfs/-/blob/master/LICENSE
+[docs-api]: https://docs.ionburst.cloud/api/
