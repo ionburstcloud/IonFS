@@ -29,27 +29,27 @@ build_windows:
     - export ASSEMBLY_VERSION=$(echo $RELEASE_VERSION | cut -d "-" -f1)
     - 'echo "Assembly version is: $ASSEMBLY_VERSION"'
     - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
-    - 'cd IonFS'
+    - "cd IonFS"
     - cat $MINISIGN > minisign.key
     - echo $MINISIGN_PASS > min_pass
-    - 'ls -lah'
-    - 'dotnet restore -s https://api.nuget.org/v3/index.json'
+    - "ls -lah"
+    - "dotnet restore -s https://api.nuget.org/v3/index.json"
   script:
-    - 'dotnet build -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION'
-    - 'dotnet publish -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime win-x64'
-    - 'cp -R bin/Release/net6.0/win-x64/publish .'
-    - 'ls -lah publish'
-    - 'mv publish/IonFS.exe publish/ionfs.exe'
-    - 'cd publish'
-    - 'tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-windows.tar.bz2 ./*'
-    - 'cd ..'
+    - "dotnet build -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION"
+    - "dotnet publish -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime win-x64"
+    - "cp -R bin/Release/net6.0/win-x64/publish ."
+    - "ls -lah publish"
+    - "mv publish/IonFS.exe publish/ionfs.exe"
+    - "cd publish"
+    - "tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-windows.tar.bz2 ./*"
+    - "cd .."
     - 'minisign -s minisign.key -Sm $CI_PROJECT_NAME-$RELEASE_VERSION-windows.tar.bz2 -t "ionfs $RELEASE_VERSION" < min_pass'
-    - 'if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_path=scw-fr-par/ionfs/develop/; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_path=scw-fr-par/ionfs/; echo $ionfs_path; fi;'
-    - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-windows.tar.bz2 $ionfs_path'
-    - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-windows.tar.bz2.minisig $ionfs_path'
-    - 'mc ls $ionfs_path'
-    - 'rm -f minisign.key'
-    - 'rm -f min_pass'
+    - "if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_path=scw-fr-par/ionfs/develop/; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_path=scw-fr-par/ionfs/; echo $ionfs_path; fi;"
+    - "mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-windows.tar.bz2 $ionfs_path"
+    - "mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-windows.tar.bz2.minisig $ionfs_path"
+    - "mc ls $ionfs_path"
+    - "rm -f minisign.key"
+    - "rm -f min_pass"
   when: manual
   allow_failure: false
   only:
@@ -65,33 +65,34 @@ build_mac:
     - export ASSEMBLY_VERSION=$(echo $RELEASE_VERSION | cut -d "-" -f1)
     - 'echo "Assembly version is: $ASSEMBLY_VERSION"'
     - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
-    - 'cd IonFS'
+    - "cd IonFS"
     - cat $MINISIGN > minisign.key
     - echo $MINISIGN_PASS > min_pass
-    - 'ls -lah'
-    - 'dotnet restore -s https://api.nuget.org/v3/index.json'
+    - "ls -lah"
+    - "dotnet restore -s https://api.nuget.org/v3/index.json"
   script:
-    - 'dotnet build -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION'
-    - 'dotnet publish -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime osx-x64'
-    - 'cp -R bin/Release/net6.0/osx-x64/publish .'
-    - 'ls -lah publish'
-    - 'mv publish/IonFS ./ionfs'
-    - 'gon --log-level info .gon.hcl'
-    - 'rm -f ionfs'
-    - 'unzip ionfs.zip'
-    - 'ls -lah'
-    - 'mv ionfs ./publish'
-    - 'cd publish'
-    - 'spctl -a -vv -t install bulk-splitter'
-    - 'tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-mac.tar.bz2 ./*'
-    - 'cd ..'
+    - "dotnet build -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION"
+    - "dotnet publish -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime osx-x64"
+    - "cp -R bin/Release/net6.0/osx-x64/publish ."
+    - "ls -lah publish"
+    - "mv publish/IonFS ../ionfs"
+    - "cd ../"
+    - "gon --log-level info .gon.hcl"
+    - "rm -f ionfs"
+    - "unzip ionfs.zip"
+    - "ls -lah"
+    - "mv ionfs ./IonFS/publish"
+    - "cd ./IonFS/publish"
+    - "spctl -a -vv -t install ionfs"
+    - "tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-mac.tar.bz2 ./*"
+    - "cd .."
     - 'minisign -s minisign.key -Sm ionfs-$RELEASE_VERSION-mac.tar.bz2 -t "ionfs $RELEASE_VERSION" < min_pass'
-    - 'if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_path=scw-fr-par/ionfs/develop/; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_path=scw-fr-par/ionfs/; echo $ionfs_path; fi;'
-    - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-mac.tar.bz2 $ionfs_path'
-    - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-mac.tar.bz2.minisig $ionfs_path'
-    - 'mc ls $ionfs_path'
-    - 'rm -f minisign.key'
-    - 'rm -f min_pass'
+    - "if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_path=scw-fr-par/ionfs/develop/; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_path=scw-fr-par/ionfs/; echo $ionfs_path; fi;"
+    - "mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-mac.tar.bz2 $ionfs_path"
+    - "mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-mac.tar.bz2.minisig $ionfs_path"
+    - "mc ls $ionfs_path"
+    - "rm -f minisign.key"
+    - "rm -f min_pass"
   when: manual
   allow_failure: false
   only:
@@ -110,40 +111,40 @@ build_mac_arm64:
     - export ASSEMBLY_VERSION=$(echo $RELEASE_VERSION | cut -d "-" -f1)
     - 'echo "Assembly version is: $ASSEMBLY_VERSION"'
     - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
-    - 'cd IonFS'
+    - "cd IonFS"
     - cat $MINISIGN > minisign.key
     - echo $MINISIGN_PASS > min_pass
-    - 'ls -lah'
-    - 'dotnet restore -s https://api.nuget.org/v3/index.json'
+    - "ls -lah"
+    - "dotnet restore -s https://api.nuget.org/v3/index.json"
   script:
-    - 'dotnet build -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION'
-    - 'dotnet publish -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime osx-arm64'
-    - 'cp -R bin/Release/net6.0/osx-arm64/publish .'
-    - 'ls -lah publish'
-    - 'mv publish/IonFS ./ionfs'
-    - 'gon --log-level info .gon.hcl'
-    - 'rm -f ionfs'
-    - 'unzip ionfs.zip'
-    - 'ls -lah'
-    - 'mv ionfs ./publish'
-    - 'cd publish'
-    - 'spctl -a -vv -t install bulk-splitter'
-    - 'tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-mac-arm64.tar.bz2 ./*'
-    - 'cd ..'
+    - "dotnet build -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION"
+    - "dotnet publish -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime osx-arm64"
+    - "cp -R bin/Release/net6.0/osx-arm64/publish ."
+    - "ls -lah publish"
+    - "mv publish/IonFS ../ionfs"
+    - "cd ../"
+    - "gon --log-level info .gon.hcl"
+    - "rm -f ionfs"
+    - "unzip ionfs.zip"
+    - "ls -lah"
+    - "mv ionfs ./IonFS/publish"
+    - "cd ./IonFS/publish"
+    - "spctl -a -vv -t install ionfs"
+    - "tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-mac-arm64.tar.bz2 ./*"
+    - "cd .."
     - 'minisign -s minisign.key -Sm ionfs-$RELEASE_VERSION-mac-arm64.tar.bz2 -t "ionfs $RELEASE_VERSION" < min_pass'
-    - 'if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_path=scw-fr-par/ionfs/develop/; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_path=scw-fr-par/ionfs/; echo $ionfs_path; fi;'
-    - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-mac-arm64.tar.bz2 $ionfs_path'
-    - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-mac-arm64.tar.bz2.minisig $ionfs_path'
-    - 'mc ls $ionfs_path'
-    - 'rm -f minisign.key'
-    - 'rm -f min_pass'
+    - "if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_path=scw-fr-par/ionfs/develop/; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_path=scw-fr-par/ionfs/; echo $ionfs_path; fi;"
+    - "mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-mac-arm64.tar.bz2 $ionfs_path"
+    - "mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-mac-arm64.tar.bz2.minisig $ionfs_path"
+    - "mc ls $ionfs_path"
+    - "rm -f minisign.key"
+    - "rm -f min_pass"
   when: manual
   allow_failure: false
   only:
     - develop
   tags:
     - mac-arm64
-
 build_linux:
   stage: build_releases
   before_script:
@@ -153,27 +154,27 @@ build_linux:
     - export ASSEMBLY_VERSION=$(echo $RELEASE_VERSION | cut -d "-" -f1)
     - 'echo "Assembly version is: $ASSEMBLY_VERSION"'
     - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
-    - 'cd IonFS'
+    - "cd IonFS"
     - cat $MINISIGN > minisign.key
     - echo $MINISIGN_PASS > min_pass
-    - 'ls -lah'
-    - 'dotnet restore -s https://api.nuget.org/v3/index.json'
+    - "ls -lah"
+    - "dotnet restore -s https://api.nuget.org/v3/index.json"
   script:
-    - 'dotnet build -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION'
-    - 'dotnet publish -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime linux-x64'
-    - 'cp -R bin/Release/net6.0/linux-x64/publish .'
-    - 'ls -lah publish'
-    - 'mv publish/IonFS publish/ionfs'
-    - 'cd publish'
-    - 'tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-linux.tar.bz2 ./*'
-    - 'cd ..'
+    - "dotnet build -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION"
+    - "dotnet publish -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime linux-x64"
+    - "cp -R bin/Release/net6.0/linux-x64/publish ."
+    - "ls -lah publish"
+    - "mv publish/IonFS publish/ionfs"
+    - "cd publish"
+    - "tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-linux.tar.bz2 ./*"
+    - "cd .."
     - 'minisign -s minisign.key -Sm ionfs-$RELEASE_VERSION-linux.tar.bz2 -t "ionfs $RELEASE_VERSION" < min_pass'
-    - 'if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_path=scw-fr-par/ionfs/develop/; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_path=scw-fr-par/ionfs/; echo $ionfs_path; fi;'
-    - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux.tar.bz2 $ionfs_path'
-    - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux.tar.bz2.minisig $ionfs_path'
-    - 'mc ls $ionfs_path'
-    - 'rm -f minisign.key'
-    - 'rm -f min_pass'
+    - "if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_path=scw-fr-par/ionfs/develop/; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_path=scw-fr-par/ionfs/; echo $ionfs_path; fi;"
+    - "mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux.tar.bz2 $ionfs_path"
+    - "mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux.tar.bz2.minisig $ionfs_path"
+    - "mc ls $ionfs_path"
+    - "rm -f minisign.key"
+    - "rm -f min_pass"
   when: manual
   allow_failure: false
   only:
@@ -189,27 +190,27 @@ build_linux_arm64:
     - export ASSEMBLY_VERSION=$(echo $RELEASE_VERSION | cut -d "-" -f1)
     - 'echo "Assembly version is: $ASSEMBLY_VERSION"'
     - mc config host add scw-fr-par https://s3.fr-par.scw.cloud $SCW_AK $SCW_SK --api S3v4
-    - 'cd IonFS'
+    - "cd IonFS"
     - cat $MINISIGN > minisign.key
     - echo $MINISIGN_PASS > min_pass
-    - 'ls -lah'
-    - 'dotnet restore -s https://api.nuget.org/v3/index.json'
+    - "ls -lah"
+    - "dotnet restore -s https://api.nuget.org/v3/index.json"
   script:
-    - 'dotnet build -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION'
-    - 'dotnet publish -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime linux-arm64'
-    - 'cp -R bin/Release/net6.0/linux-arm64/publish .'
-    - 'ls -lah publish'
-    - 'mv publish/IonFS publish/ionfs'
-    - 'cd publish'
-    - 'tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-linux-arm64.tar.bz2 ./*'
-    - 'cd ..'
+    - "dotnet build -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION"
+    - "dotnet publish -c Release -p:Version=$RELEASE_VERSION -p:AssemblyVersion=$ASSEMBLY_VERSION -p:PublishSingleFile=true -p:PublishTrimmed=true --runtime linux-arm64"
+    - "cp -R bin/Release/net6.0/linux-arm64/publish ."
+    - "ls -lah publish"
+    - "mv publish/IonFS publish/ionfs"
+    - "cd publish"
+    - "tar cfvj ../$CI_PROJECT_NAME-$RELEASE_VERSION-linux-arm64.tar.bz2 ./*"
+    - "cd .."
     - 'minisign -s minisign.key -Sm ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2 -t "ionfs $RELEASE_VERSION" < min_pass'
-    - 'if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_path=scw-fr-par/ionfs/develop/; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_path=scw-fr-par/ionfs/; echo $ionfs_path; fi;'
-    - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2 $ionfs_path'
-    - 'mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2.minisig $ionfs_path'
-    - 'mc ls $ionfs_path'
-    - 'rm -f minisign.key'
-    - 'rm -f min_pass'
+    - "if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_path=scw-fr-par/ionfs/develop/; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_path=scw-fr-par/ionfs/; echo $ionfs_path; fi;"
+    - "mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2 $ionfs_path"
+    - "mc cp --attr x-amz-acl=public-read ionfs-$RELEASE_VERSION-linux-arm64.tar.bz2.minisig $ionfs_path"
+    - "mc ls $ionfs_path"
+    - "rm -f minisign.key"
+    - "rm -f min_pass"
   when: manual
   allow_failure: false
   only:
@@ -221,7 +222,7 @@ publish:
   script:
     - cat build_info
     - . build_info
-    - 'if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_uri=https://ionfs.s3.fr-par.scw.cloud/develop; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_uri=https://ionfs.s3.fr-par.scw.cloud; echo $ionfs_path; fi;'
+    - "if [ $CI_COMMIT_REF_NAME = develop ]; then ionfs_uri=https://ionfs.s3.fr-par.scw.cloud/develop; echo $ionfs_path; elif [ $CI_COMMIT_REF_NAME = main ]; then ionfs_uri=https://ionfs.s3.fr-par.scw.cloud; echo $ionfs_path; fi;"
     - echo "RELEASE_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-linux.tar.bz2" >> build_info
     - echo "RELEASE_SIG_URL=$ionfs_uri/ionfs-$RELEASE_VERSION-linux.tar.bz2.minisig" >> build_info
     - echo "RELEASE_DESC=\"ionfs Linux amd64 binary\"" >> build_info
