@@ -2,6 +2,21 @@
 
 <!--- next entry here -->
 
+## 0.3.0-develop.1
+2022-03-06
+
+### Features
+
+- @jamiejshunter finalised local filesystem metadata repository work (a6d131089c30601bf0ea3f149fa0f1524d1240ce)
+
+### Fixes
+
+- update dependencies for .net6.0 (ca240815760a10892e25f56c48521db20c7b6c92)
+- minor package updates and @jamiejshunter updates to IonFS (b05273cbab9d8049641dbb3753f8fe18965389b9)
+- minor fixes, initial LocalFS repo (eb66aa771de247f8a738c992a0eb31194675a241)
+- @jamiejshunter bug fix for S3 Metadata Exists (35b959495ea4447bd38fcad1c830b646c41b0962)
+- @jamiejshunter fixes for ListAsync (2fad6eb2f274bc81820db2a1d60a549b72e95744)
+
 ## 0.2.5-develop.4
 2021-12-24
 
