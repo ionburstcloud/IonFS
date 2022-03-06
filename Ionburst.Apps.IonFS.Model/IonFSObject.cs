@@ -1,7 +1,6 @@
 ﻿// Copyright Ionburst Limited 2018-2021
 
 using System;
-
 using Ionburst.Apps.IonFS.Exceptions;
 
 namespace Ionburst.Apps.IonFS.Model
@@ -10,7 +9,7 @@ namespace Ionburst.Apps.IonFS.Model
     {
         public string FS { get; set; }
         public string Repository { get; set; }
-        public string Name { get; set; } 
+        public string Name { get; set; }
         public string Path { get; set; }
         public string Text { get; set; }
         public DateTime LastModified { get; set; }
@@ -22,22 +21,26 @@ namespace Ionburst.Apps.IonFS.Model
         public Boolean IsText { get; set; }
         public Boolean IsSecret { get; set; }
 
-        public string FullName { 
-            get {
-                string newPath = Path==@"/"?"":Path;
+        public string FullName
+        {
+            get
+            {
+                //string newPath = Path==@"/"?"":Path;
+                string newPath = Path;
 
-                return $"{newPath}{Name}"; 
-            } 
+                return $"{newPath}{Name}";
+            }
         }
-        public string FullFSName 
-        { 
-            get 
-            { 
+
+        public string FullFSName
+        {
+            get
+            {
                 if (HasRepository)
                     return $"{FS}{Repository}/{Path}{Name}";
                 else
-                    return $"{FS}{Path}{Name}"; 
-            } 
+                    return $"{FS}{Path}{Name}";
+            }
         }
 
         public override string ToString()
@@ -50,6 +53,7 @@ namespace Ionburst.Apps.IonFS.Model
             if (fullName == null)
                 throw new ArgumentNullException(nameof(fullName), "fullName cannot be Null.");
 
+            bool isRemote = fullName.StartsWith("ion://");
             string path = "";
             string filename = "";
             int indx = fullName.LastIndexOf(@"/");
@@ -61,7 +65,11 @@ namespace Ionburst.Apps.IonFS.Model
             else
                 filename = fullName;
 
-            return new IonFSObject { FS="", Name = filename, IsFile = true, IsText = false, Path = path, IsFolder = false, IsRemote = false, IsRoot = false, HasRepository = false };
+            return new IonFSObject
+            {
+                FS = isRemote ? "ion://" : "", Name = filename, IsFile = true, IsText = false, Path = path,
+                IsFolder = false, IsRemote = isRemote, IsRoot = false, HasRepository = false
+            };
         }
     }
 }

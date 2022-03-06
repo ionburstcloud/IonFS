@@ -53,9 +53,11 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
         {
             bool exists;
             if (fso.IsFolder)
-                exists = Directory.Exists(Path.Combine(_dataStoreFolder.FullName, fso.FullName));
+                exists = Directory.Exists(Path.Combine(_dataStoreFolder.FullName,
+                    fso.FullName.Replace('/', Path.DirectorySeparatorChar)));
             else
-                exists = File.Exists(Path.Combine(_dataStoreFolder.FullName, fso.FullName));
+                exists = File.Exists(Path.Combine(_dataStoreFolder.FullName,
+                    fso.FullName.Replace('/', Path.DirectorySeparatorChar)));
 
             return exists;
         }
@@ -110,18 +112,24 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
             {
                 SearchOption so = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
                 var files = from file
-                        in Directory.EnumerateFiles(
+                        in Directory.EnumerateFileSystemEntries(
                             Path.Combine(_dataStoreFolder.FullName, folder.FullName),
                             "*", so
                         )
                     select new
                     {
-                        File = file.Replace('/', Path.DirectorySeparatorChar)
+                        FileData = new FileInfo(file.Replace('/', Path.DirectorySeparatorChar))
                     };
 
                 foreach (var f in files)
                 {
-                    IonFSObject fso = IonFSObject.FromLocalFile(f.File);
+                    IonFSObject fso = IonFSObject.FromLocalFile(
+                        f.FileData.FullName.Replace(_dataStoreFolder.FullName + Path.DirectorySeparatorChar, ""));
+                    fso.FS = "ion://";
+                    fso.IsRemote = true;
+                    fso.IsFolder = (f.FileData.Attributes == FileAttributes.Directory);
+                    fso.LastModified = f.FileData.LastWriteTime;
+
                     items.Add(fso);
                 }
             }
@@ -160,15 +168,16 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
 
             if (!Exists(source).Result)
                 throw new IonFSException("Source must exist");
-            if (Exists(target).Result)
+            if (Exists(target).Result && !target.IsFolder)
                 throw new IonFSException("Target already exists");
 
             try
             {
                 if (string.IsNullOrEmpty(target.Name)) target.Name = source.Name;
 
-                string sourceFilename = Path.Combine(_dataStoreFolder.FullName, source.FullName);
-                string targetFilename = Path.Combine(_dataStoreFolder.FullName, target.FullName);
+                string path = _dataStoreFolder.FullName;
+                string sourceFilename = Path.Combine(path, source.FullName.Replace('/', Path.DirectorySeparatorChar));
+                string targetFilename = Path.Combine(path, target.FullName.Replace('/', Path.DirectorySeparatorChar));
 
                 File.Move(sourceFilename, targetFilename);
             }

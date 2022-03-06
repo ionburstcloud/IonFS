@@ -170,7 +170,7 @@ namespace Ionburst.Apps.IonFS
             return ionburstPrivate;
         }
 
-        protected IIonFSMetadata GetMetadataHandler(IonFSObject fso)
+        public IIonFSMetadata GetMetadataHandler(IonFSObject fso)
         {
             IonFSRepository repo = Repositories.Find(r => r.Repository == fso.Repository);
 
@@ -283,6 +283,9 @@ namespace Ionburst.Apps.IonFS
                 throw new ArgumentNullException(nameof(source), "source object cannot be null");
             if (target == null)
                 throw new ArgumentNullException(nameof(target), "target object cannot be null");
+            
+            if (source.IsRemote)
+                throw new IonFSException("Source cannot be a remote object, yet!");
 
             IonFSMetadata metadata = new IonFSMetadata();
             metadata.Name = string.IsNullOrEmpty(target.Name) ? source.Name : target.Name;
@@ -750,8 +753,10 @@ namespace Ionburst.Apps.IonFS
                     HasRepository = false
                 };
 
-            if (folder.StartsWith(fs))
+            if (!string.IsNullOrEmpty(folder) && folder.StartsWith(fs, StringComparison.Ordinal))
+            {
                 isRemote = true;
+            }
 
             if (autoAddDelimiter && !folder.EndsWith(@"/", StringComparison.Ordinal))
                 folder += @"/";
@@ -772,9 +777,11 @@ namespace Ionburst.Apps.IonFS
                     if (string.IsNullOrEmpty(path))
                     {
                         isRoot = true;
-                        path = "/";
+                        //path = "/";
                     }
                 }
+
+                //if (!String.IsNullOrEmpty(path) && !path.StartsWith(@"/")) path = @"/" + path;
 
                 IonFSObject fso = new IonFSObject
                 {
@@ -792,8 +799,13 @@ namespace Ionburst.Apps.IonFS
             if (string.IsNullOrEmpty(fullFSName))
                 throw new ArgumentNullException(nameof(fullFSName), "fullFSName cannot be Null or Empty.");
 
-            string path = fullFSName.Substring(0, fullFSName.LastIndexOf(@"/") + 1);
-            string filename = string.IsNullOrEmpty(path) ? fullFSName : fullFSName.Replace(path, "");
+            string pathHolder = fullFSName.Substring(0, fullFSName.LastIndexOf(@"/") + 1);
+            string path = fullFSName == "ion://" || (fullFSName.Replace("ion://", "").LastIndexOf(@"/") == -1)
+                ? ""
+                : fullFSName.Substring(0, fullFSName.LastIndexOf(@"/"));
+            string filename = string.IsNullOrEmpty(path)
+                ? fullFSName.Replace("ion://", "")
+                : fullFSName.Replace(pathHolder, "");
 
             return FromRemoteFile(filename, path);
         }

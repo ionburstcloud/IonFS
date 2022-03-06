@@ -28,14 +28,16 @@ namespace IonFS
             command.AddArgument(new Argument<string>("folder", "path in the remote file system")
                 {Arity = ArgumentArity.ZeroOrOne});
             command.AddOption(new Option<bool>(new[] {"--recursive", "-r"}));
-            command.Handler = CommandHandler.Create<string, bool>(async (folder, recursive) =>
+            command.AddOption(new Option<bool>(new[] {"--quiet", "-q"}));
+            command.Handler = CommandHandler.Create<string, bool, bool>(async (folder, recursive, quiet) =>
             {
                 try
                 {
                     IonburstFS fs = new IonburstFS();
                     IonFSObject fso = fs.FromRemoteFolder(folder);
 
-                    Console.WriteLine(FiggleFonts.Slant.Render("IonFS"));
+                    if (!quiet)
+                        Console.WriteLine(Logo());
 
                     List<IonFSObject> items = await fs.ListAsync(fso, recursive);
 
@@ -237,11 +239,17 @@ namespace IonFS
                     }
                     catch (RemoteFSException e)
                     {
-                        Console.WriteLine(e.Message);
+                        Console.WriteLine("REMOTE EXCEPTION: {0}", e.Message);
+                    }
+                    catch (IonFSException e)
+                    {
+                        Console.WriteLine("IONFS EXCEPTION: {0}", e.Message);
                     }
                     catch (Exception e)
                     {
                         Console.WriteLine(e.Message);
+                        if (e.InnerException != null)
+                            Console.WriteLine(e.InnerException.Message);
                     }
                 });
 
@@ -255,10 +263,10 @@ namespace IonFS
             command.AddArgument(new Argument<string>("vault", "destination vault location, prefixed with ion://")
                 {Arity = ArgumentArity.ExactlyOne});
             command.AddArgument(new Argument<string>("name", "name of secret") {Arity = ArgumentArity.ExactlyOne});
-            command.AddOption(new Option<string>(new[] { "--classification", "-c" }, "Ionburst Cloud Classification"));
-            command.AddOption(new Option<bool>(new[] { "--verbose", "-v" }));
-            command.AddOption(new Option<string>(new[] { "--key", "-k" }, "path to symmetric key"));
-            command.AddOption(new Option<string>(new[] { "--passphrase", "-pp" }, "passphrase to generate key"));
+            command.AddOption(new Option<string>(new[] {"--classification", "-c"}, "Ionburst Cloud Classification"));
+            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
+            command.AddOption(new Option<string>(new[] {"--key", "-k"}, "path to symmetric key"));
+            command.AddOption(new Option<string>(new[] {"--passphrase", "-pp"}, "passphrase to generate key"));
             command.Handler = CommandHandler.Create<string, string, string, string, bool, string, string>(
                 async (data, vault, name, classification, verbose, key, passphrase) =>
                 {
@@ -325,10 +333,11 @@ namespace IonFS
         private static Command SecretGet()
         {
             Command command = new Command("get", "retrieve secret, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("from", "remote path to the source data") { Arity = ArgumentArity.ExactlyOne });
-            command.AddOption(new Option<bool>(new[] { "--verbose", "-v" }));
-            command.AddOption(new Option<string>(new[] { "--key", "-k" }, "path to symmetric key"));
-            command.AddOption(new Option<string>(new[] { "--passphrase", "-pp" }, "passphrase to generate key"));
+            command.AddArgument(new Argument<string>("from", "remote path to the source data")
+                {Arity = ArgumentArity.ExactlyOne});
+            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
+            command.AddOption(new Option<string>(new[] {"--key", "-k"}, "path to symmetric key"));
+            command.AddOption(new Option<string>(new[] {"--passphrase", "-pp"}, "passphrase to generate key"));
             command.Handler = CommandHandler.Create<string, bool, string, string>(
                 async (from, verbose, key, passphrase) =>
                 {
@@ -394,8 +403,8 @@ namespace IonFS
         {
             Command command = new Command("del", "delete an object, prefix remote paths with ion://");
             command.AddArgument(new Argument<string>("path", "path to remove") {Arity = ArgumentArity.ExactlyOne});
-            command.AddOption(new Option<bool>(new[] { "--verbose", "-v" }));
-            command.AddOption(new Option<bool>(new[] { "--recursive", "-r" }));
+            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
+            command.AddOption(new Option<bool>(new[] {"--recursive", "-r"}));
             command.Handler = CommandHandler.Create<string, bool, bool>(async (path, verbose, recursive) =>
             {
                 try
@@ -488,11 +497,12 @@ namespace IonFS
             command.AddArgument(new Argument<string>("from") {Arity = ArgumentArity.ExactlyOne});
             command.AddArgument(new Argument<string>("to") {Arity = ArgumentArity.ExactlyOne});
             //command.AddOption(new Option(new[] { "--name", "-n" }));
-            command.AddOption(new Option<bool>(new[] { "--verbose", "-v" }));
-            command.AddOption(new Option<string>(new[] { "--key", "-k" }, "path to symmetric key"));
-            command.AddOption(new Option<string>(new[] { "--passphrase", "-pp" }, "passphrase to generate key"));
-            command.Handler = CommandHandler.Create<string, string, bool, string, string>(async (from, to, verbose, key, passphrase) =>
-            {
+            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
+            command.AddOption(new Option<string>(new[] {"--key", "-k"}, "path to symmetric key"));
+            command.AddOption(new Option<string>(new[] {"--passphrase", "-pp"}, "passphrase to generate key"));
+            command.Handler = CommandHandler.Create<string, string, bool, string, string>(
+                async (from, to, verbose, key, passphrase) =>
+                {
                     try
                     {
                         if (string.IsNullOrEmpty(from))
@@ -547,11 +557,12 @@ namespace IonFS
             command.AddArgument(new Argument<string>("from") {Arity = ArgumentArity.ExactlyOne});
             command.AddArgument(new Argument<string>("to") {Arity = ArgumentArity.ExactlyOne});
             //command.AddOption(new Option<string>(new[] { "--name", "-n" }, "new filename"));
-            command.AddOption(new Option<bool>(new[] { "--verbose", "-v" }));
-            command.AddOption(new Option<string>(new[] { "--key", "-k" }, "path to symmetric key"));
-            command.AddOption(new Option<string>(new[] { "--passphrase", "-pp" }, "passphrase to generate key"));
-            command.Handler = CommandHandler.Create<string, string, bool, string, string>(async (from, to, verbose, key, passphrase) =>
-            {
+            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
+            command.AddOption(new Option<string>(new[] {"--key", "-k"}, "path to symmetric key"));
+            command.AddOption(new Option<string>(new[] {"--passphrase", "-pp"}, "passphrase to generate key"));
+            command.Handler = CommandHandler.Create<string, string, bool, string, string>(
+                async (from, to, verbose, key, passphrase) =>
+                {
                     try
                     {
                         if (string.IsNullOrEmpty(from))
@@ -631,8 +642,8 @@ namespace IonFS
         {
             Command command = new Command("rmdir", "remove a folder, prefix remote paths with ion://");
             command.AddArgument(new Argument<string>("folder") {Arity = ArgumentArity.ExactlyOne});
-            command.AddOption(new Option<bool>(new[] { "--verbose", "-v" }));
-            command.AddOption(new Option<bool>(new[] { "--recursive", "-r" }));
+            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
+            command.AddOption(new Option<bool>(new[] {"--recursive", "-r"}));
             command.Handler = CommandHandler.Create<string, bool, bool>(async (folder, verbose, recursive) =>
             {
                 try
@@ -640,7 +651,7 @@ namespace IonFS
                     if (string.IsNullOrEmpty(folder))
                         throw new ArgumentNullException(nameof(folder));
 
-                    IonburstFS fs = new IonburstFS() { Verbose = verbose };
+                    IonburstFS fs = new IonburstFS() {Verbose = verbose};
                     IonFSObject fso = fs.FromRemoteFolder(folder);
 
                     await fs.DeleteDirAsync(fso, recursive);
@@ -723,14 +734,16 @@ namespace IonFS
             Command command = new Command("meta") {IsHidden = true};
             command.AddArgument(new Argument<string>("file", "prefix remote paths with ion://")
                 {Arity = ArgumentArity.ZeroOrOne});
-            command.Handler = CommandHandler.Create<string>(async (file) =>
+            command.AddOption(new Option(new[] {"--quiet", "-q"}));
+            command.Handler = CommandHandler.Create<string, bool>(async (file, quiet) =>
             {
                 if (string.IsNullOrEmpty(file))
                     throw new ArgumentNullException(nameof(file));
 
                 try
                 {
-                    Console.WriteLine(FiggleFonts.Slant.Render("IonFS"));
+                    if (!quiet)
+                        Console.WriteLine(Logo());
 
                     IonburstFS fs = new IonburstFS();
                     IonFSObject fso = fs.FromRemoteFile(file);
@@ -907,7 +920,7 @@ namespace IonFS
             {
                 var command = new RootCommand("Securing your data on Ionburst Cloud.");
                 command.AddOption(new Option(new[] {"--version", "-v"}));
-                command.Handler = CommandHandler.Create<IConsole, bool>((console, version) =>
+                command.Handler = CommandHandler.Create<IConsole, bool, bool>((console, version, quiet) =>
                 {
                     Console.WriteLine(Logo());
                     Console.WriteLine($"We may guard your data, but we'll never take its freedom!");

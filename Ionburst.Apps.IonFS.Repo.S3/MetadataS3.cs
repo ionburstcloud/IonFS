@@ -110,7 +110,7 @@ namespace Ionburst.Apps.IonFS.Repo.S3
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                throw e;
             }
 
             return exists;
