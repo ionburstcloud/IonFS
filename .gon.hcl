@@ -1,4 +1,4 @@
-source = ["./ionfs"]
+source = ["./ionfs-bin"]
 bundle_id = "io.ionburst.ionfs"
 
 apple_id {
