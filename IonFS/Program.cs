@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
+using System.CommandLine.NamingConventionBinder;
 using System.Linq;
 using Ionburst.Apps.IonFS;
 using Ionburst.Apps.IonFS.Model;
@@ -919,29 +920,29 @@ namespace IonFS
             try
             {
                 var command = new RootCommand("Securing your data on Ionburst Cloud.");
-                command.AddOption(new Option(new[] {"--version", "-v"}));
-                command.Handler = CommandHandler.Create<IConsole, bool, bool>((console, version, quiet) =>
+                command.AddOption(new Option(new[] {"--info", "-i"}, "Display IonFS information"));
+                command.Handler = CommandHandler.Create<IConsole, bool, bool>((console, info, quiet) =>
                 {
                     Console.WriteLine(Logo());
                     Console.WriteLine($"We may guard your data, but we'll never take its freedom!");
-                    Console.WriteLine("\nUsage: IonFS --help");
+                    Console.WriteLine("\nUsage: ionfs --help");
                     Console.WriteLine();
 
-                    if (version)
+                    if (info)
                     {
                         try
                         {
                             IonburstFS ionburst = new IonburstFS();
 
-                            Console.WriteLine(" Ionburst Cloud {1} is {0}\n",
+                            Console.WriteLine("Ionburst Cloud {1} is {0}\n",
                                 (ionburst.IonburstStatus) ? "Online" : "Offline", ionburst.IonburstUri);
                             foreach (var v in ionburst.IonburstVersion)
                             {
-                                Console.WriteLine($" {v}");
+                                Console.WriteLine($"{v}");
                             }
 
-                            Console.WriteLine($"  Max Upload: {ionburst.MaxUploadSize} bytes");
-                            Console.WriteLine($"    Max Size: {ionburst.MaxSize} bytes");
+                            Console.WriteLine($"Max Upload:  {ionburst.MaxUploadSize} bytes");
+                            Console.WriteLine($"Max Size:    {ionburst.MaxSize} bytes");
                         }
                         catch (IonFSException e)
                         {
