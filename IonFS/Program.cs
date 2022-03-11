@@ -42,11 +42,6 @@ namespace IonFS
 
                     List<IonFSObject> items = await fs.ListAsync(fso, recursive);
 
-                    if (!fso.Path.StartsWith('/'))
-                    {
-                        fso.Path = "/" + fso.Path;
-                    }
-
                     if (!fso.IsSecret)
                     {
                         Console.WriteLine($"Directory of {fso}\n");
