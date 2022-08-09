@@ -11,6 +11,7 @@ using Ionburst.Apps.IonFS.Model;
 using Ionburst.Apps.IonFS.Exceptions;
 using Figgle;
 using System.Reflection;
+using System.CommandLine.NamingConventionBinder;
 
 namespace IonFS
 {
@@ -810,7 +811,7 @@ namespace IonFS
         {
             Command command = new Command("policy", "list the current Ionburst Cloud Classification Policies")
                 {IsHidden = false};
-            command.Handler = CommandHandler.Create(async () =>
+            command.Handler = CommandHandler.Create(new Action(async () =>
             {
                 try
                 {
@@ -830,11 +831,11 @@ namespace IonFS
                 catch (RemoteFSException e)
                 {
                     Console.WriteLine(e.Message);
-                    return 1;
+                    //return 1;
                 }
 
-                return 0;
-            });
+                //return 0;
+            }));
 
             return command;
         }
@@ -842,7 +843,7 @@ namespace IonFS
         private static Command GetRepos()
         {
             Command command = new Command("repos", "list the currently registered Repositories") {IsHidden = false};
-            command.Handler = CommandHandler.Create(() =>
+            command.Handler = CommandHandler.Create(new Action(() =>
             {
                 try
                 {
@@ -861,11 +862,11 @@ namespace IonFS
                 catch (IonFSException e)
                 {
                     Console.WriteLine(e.Message);
-                    return 1;
+                    //return 1;
                 }
 
-                return 0;
-            });
+                //return 0;
+            }));
 
             return command;
         }
@@ -915,8 +916,8 @@ namespace IonFS
             try
             {
                 var command = new RootCommand("Securing your data on Ionburst Cloud.");
-                command.AddOption(new Option(new[] {"--info", "-i"}, "Display IonFS information"));
-                command.Handler = CommandHandler.Create<IConsole, bool, bool>((console, info, quiet) =>
+                command.AddOption(new Option(new[] { "--info", "-i" }));
+                command.Handler = CommandHandler.Create<IConsole, bool>((console, info) =>
                 {
                     Console.WriteLine(Logo());
                     Console.WriteLine($"We may guard your data, but we'll never take its freedom!");
