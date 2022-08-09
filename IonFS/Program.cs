@@ -25,13 +25,18 @@ namespace IonFS
 
         private static Command List()
         {
+            var folderArgument = new Argument<String>("folder", "path in the remote file system")
+                { Arity = ArgumentArity.ZeroOrOne };
+            var recursiveOption = new Option<bool>(new[] { "--recursive", "-r" });
+            var quietOption = new Option<bool>(new[] { "--quiet", "-q" });
+
             Command command =
                 new Command("list", "show the contents of a remote path, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("folder", "path in the remote file system")
-                {Arity = ArgumentArity.ZeroOrOne});
-            command.AddOption(new Option<bool>(new[] {"--recursive", "-r"}));
-            command.AddOption(new Option<bool>(new[] {"--quiet", "-q"}));
-            command.Handler = CommandHandler.Create<string, bool, bool>(async (folder, recursive, quiet) =>
+            command.AddAlias("ls");
+            command.Add(folderArgument);
+            command.Add(recursiveOption);
+            command.Add(quietOption);
+            command.SetHandler(async (folder, recursive, quiet) =>
             {
                 try
                 {
@@ -84,95 +89,112 @@ namespace IonFS
                 {
                     Console.WriteLine(e.Message);
                 }
-            });
+            }, folderArgument, recursiveOption, quietOption);
 
             return command;
         }
 
         private static Command Get()
         {
+            var fromArgument = new Argument<string>("from", "remote path to the source data")
+                { Arity = ArgumentArity.ExactlyOne };
+            var toArgument = new Argument<string>("to", "optional local target name")
+                { Arity = ArgumentArity.ZeroOrOne };
+
+            var nameOption = new Option<string>(new[] { "--name", "-n" });
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
+            var keyOption = new Option<string>(new[] { "--key", "-k" }, "path to symmetric key");
+            var passphraseOption = new Option<string>(new[] { "--passphrase", "-pp" }, "passphrase to generate key");
+
             Command command = new Command("get", "download a file, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("from", "remote path to the source data")
-                {Arity = ArgumentArity.ExactlyOne});
-            command.AddArgument(new Argument<string>("to", "optional local target name")
-                {Arity = ArgumentArity.ZeroOrOne});
-            //command.AddOption(new Option<string>(new[] { "--name", "-n" }));
-            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
-            command.AddOption(new Option<string>(new[] {"--key", "-k"}, "path to symmetric key"));
-            command.AddOption(new Option<string>(new[] {"--passphrase", "-pp"}, "passphrase to generate key"));
-            command.Handler = CommandHandler.Create<string, string, bool, string, string>(
-                async (from, to, verbose, key, passphrase) =>
-
+            command.Add(fromArgument);
+            command.Add(toArgument);
+            command.Add(nameOption);
+            command.Add(verboseOption);
+            command.Add(keyOption);
+            command.Add(passphraseOption);
+            command.SetHandler(async (from, to, name, verbose, key, passphrase) =>
+            {
+                try
                 {
-                    try
+                    if (string.IsNullOrEmpty(from))
+                        throw new ArgumentNullException(nameof(from));
+
+                    IonburstFS fs = new IonburstFS { Verbose = verbose };
+
+                    if (!string.IsNullOrEmpty(key))
                     {
-                        if (string.IsNullOrEmpty(from))
-                            throw new ArgumentNullException(nameof(from));
+                        IonFSCrypto crypto = new();
+                        crypto.KeyFromFile(key);
 
-                        IonburstFS fs = new IonburstFS {Verbose = verbose};
-
-                        if (!string.IsNullOrEmpty(key))
-                        {
-                            IonFSCrypto crypto = new IonFSCrypto();
-                            crypto.KeyFromFile(key);
-
-                            fs.Encrypt = true;
-                            fs.KeyPath = key;
-                            fs.Crypto = crypto;
-                        }
-                        else if (!string.IsNullOrEmpty(passphrase))
-                        {
-                            IonFSCrypto crypto = new IonFSCrypto();
-                            crypto.KeyFromPassphrase(passphrase);
-
-                            fs.Encrypt = true;
-                            fs.Crypto = crypto;
-                        }
-
-                        IonFSObject fromFso = fs.FromRemoteFile(from);
-                        IonFSObject toFso = IonFSObject.FromLocalFile((to is null) ? fromFso.Name : to);
-
-                        var results = await fs.GetAsync(fromFso, toFso);
-                        if (!results.All(r => r.Value == 200))
-                        {
-                            Console.WriteLine($"Error receiving data from Ionburst!");
-                            foreach (var r in results)
-                                Console.WriteLine($" {r.Key} {r.Value}");
-                        }
+                        fs.Encrypt = true;
+                        fs.KeyPath = key;
+                        fs.Crypto = crypto;
                     }
-                    catch (RemoteFSException e)
+                    else if (!string.IsNullOrEmpty(passphrase))
                     {
-                        Console.WriteLine(e.Message);
-                    }
-                    catch (IonFSChecksumException e)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
-                    catch (IonFSException e)
-                    {
-                        Console.WriteLine(e.Message);
+                        IonFSCrypto crypto = new IonFSCrypto();
+                        crypto.KeyFromPassphrase(passphrase);
+
+                        fs.Encrypt = true;
+                        fs.Crypto = crypto;
                     }
 
-                    return 0;
-                });
+                    IonFSObject fromFso = fs.FromRemoteFile(from);
+                    IonFSObject toFso = IonFSObject.FromLocalFile((to is null) ? fromFso.Name : to);
+
+                    var results = await fs.GetAsync(fromFso, toFso);
+                    if (!results.All(r => r.Value == 200))
+                    {
+                        Console.WriteLine($"Error receiving data from Ionburst Cloud!");
+                        foreach (var r in results)
+                            Console.WriteLine($" {r.Key} {r.Value}");
+                    }
+                }
+                catch (RemoteFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                catch (IonFSChecksumException e)
+                {
+                    Console.WriteLine($"Checksum Error:");
+                    Console.WriteLine($" Actual: {e.hash}");
+                    Console.WriteLine($" Expected: {e.metadata.Hash}");
+                }
+                catch (IonFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }, fromArgument, toArgument, nameOption, verboseOption, keyOption, passphraseOption);
 
             return command;
         }
 
         private static Command Put()
         {
+            var localFileArgument = new Argument<string>("localfile", "file to upload")
+                { Arity = ArgumentArity.ExactlyOne };
+            var folderArgument = new Argument<string>("folder", "destination folder, prefixed with ion://")
+                { Arity = ArgumentArity.ExactlyOne };
+
+            var nameOption = new Option<string>(new[] { "--name", "-n" }, "rename the uploaded file");
+            var classificationOption =
+                new Option<string>(new[] { "--classification", "-c" }, "Ionburst Cloud Classification");
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" }, "Verbose output");
+            var keyOption = new Option<string>(new[] { "--key", "-k" }, "Path to symmetric key");
+            var passPhraseOption = new Option<string>(new[] { "--passphrase", "-pp" }, "Passphrase to generate key");
+            var blockSizeOption = new Option<int>(new[] { "--blocksize", "-bs" }, "Block size in bytes");
+
             Command command = new Command("put", "upload a file, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("localfile", "file to upload") {Arity = ArgumentArity.ExactlyOne});
-            command.AddArgument(new Argument<string>("folder", "destination folder, prefixed with ion://")
-                {Arity = ArgumentArity.ExactlyOne});
-            command.AddOption(new Option<string>(new[] {"--name", "-n"}, "rename the uploaded file"));
-            command.AddOption(new Option<string>(new[] {"--classification", "-c"}, "Ionburst Classification"));
-            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
-            command.AddOption(new Option<string>(new[] {"--key", "-k"}, "path to symmetric key"));
-            command.AddOption(new Option<string>(new[] {"--passphrase", "-pp"}, "passphrase to generate key"));
-            command.AddOption(new Option<string>(new[] {"--blocksize", "-bs"}, "block size in bytes"));
-            command.Handler = CommandHandler.Create<string, string, string, string, bool, string, string, long>(
-                async (localfile, folder, name, classification, verbose, key, passphrase, blocksize) =>
+            command.Add(localFileArgument);
+            command.Add(folderArgument);
+            command.Add(nameOption);
+            command.Add(classificationOption);
+            command.Add(verboseOption);
+            command.Add(keyOption);
+            command.Add(passPhraseOption);
+            command.Add(blockSizeOption);
+            command.SetHandler(async (localfile, folder, name, classification, verbose, key, passphrase, blocksize) =>
                 {
                     try
                     {
@@ -180,7 +202,6 @@ namespace IonFS
                             throw new ArgumentNullException(nameof(localfile));
                         if (string.IsNullOrEmpty(folder))
                             throw new ArgumentNullException(nameof(folder));
-
 
                         IonburstFS fs = new IonburstFS();
                         fs.Verbose = verbose;
@@ -248,24 +269,213 @@ namespace IonFS
                         if (e.InnerException != null)
                             Console.WriteLine(e.InnerException.Message);
                     }
-                });
+                }, localFileArgument, folderArgument, nameOption, classificationOption, verboseOption, keyOption,
+                passPhraseOption, blockSizeOption);
+
+            return command;
+        }
+
+        private static Command ManifestGet()
+        {
+            var fromArgument = new Argument<string>("from", "remote path to the source data")
+                { Arity = ArgumentArity.ExactlyOne };
+            var toArgument = new Argument<string>("to", "optional local target name")
+                { Arity = ArgumentArity.ZeroOrOne };
+
+            var nameOption = new Option<string>(new[] { "--name", "-n" });
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
+            var keyOption = new Option<string>(new[] { "--key", "-k" }, "path to symmetric key");
+            var passphraseOption = new Option<string>(new[] { "--passphrase", "-pp" }, "passphrase to generate key");
+
+            Command command = new Command("mget", "download a file using a Manifest, prefix remote paths with ion://");
+            command.Add(fromArgument);
+            command.Add(toArgument);
+            command.Add(nameOption);
+            command.Add(verboseOption);
+            command.Add(keyOption);
+            command.Add(passphraseOption);
+            command.SetHandler(async (from, to, name, verbose, key, passphrase) =>
+            {
+                try
+                {
+                    if (string.IsNullOrEmpty(from))
+                        throw new ArgumentNullException(nameof(from));
+
+                    IonburstFS fs = new() { Verbose = verbose };
+
+                    if (!string.IsNullOrEmpty(key))
+                    {
+                        IonFSCrypto crypto = new();
+                        crypto.KeyFromFile(key);
+
+                        fs.Encrypt = true;
+                        fs.KeyPath = key;
+                        fs.Crypto = crypto;
+                    }
+                    else if (!string.IsNullOrEmpty(passphrase))
+                    {
+                        IonFSCrypto crypto = new IonFSCrypto();
+                        crypto.KeyFromPassphrase(passphrase);
+
+                        fs.Encrypt = true;
+                        fs.Crypto = crypto;
+                    }
+
+                    IonFSObject fromFso = fs.FromRemoteFile(from);
+                    IonFSObject toFso = IonFSObject.FromLocalFile((to is null) ? fromFso.Name : to);
+
+                    var results = await fs.ManifestGetAsync(fromFso, toFso);
+                    if (!results.All(r => r.Value == 200))
+                    {
+                        Console.WriteLine($"Error receiving data from Ionburst Cloud!");
+                        foreach (var r in results)
+                            Console.WriteLine($" {r.Key} {r.Value}");
+                    }
+                }
+                catch (RemoteFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                catch (IonFSChecksumException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                catch (IonFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }, fromArgument, toArgument, nameOption, verboseOption, keyOption, passphraseOption);
+
+            return command;
+        }
+
+        private static Command ManifestPut()
+        {
+            var localFileArgument = new Argument<string>("localfile", "file to upload")
+                { Arity = ArgumentArity.ExactlyOne };
+            var folderArgument = new Argument<string>("folder", "destination folder, prefixed with ion://")
+                { Arity = ArgumentArity.ExactlyOne };
+
+            var nameOption = new Option<string>(new[] { "--name", "-n" }, "rename the uploaded file");
+            var classificationOption =
+                new Option<string>(new[] { "--classification", "-c" }, "Ionburst Cloud Classification");
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" }, "Verbose output");
+            var keyOption = new Option<string>(new[] { "--key", "-k" }, "Path to symmetric key");
+            var passPhraseOption = new Option<string>(new[] { "--passphrase", "-pp" }, "Passphrase to generate key");
+            var blockSizeOption = new Option<int>(new[] { "--blocksize", "-bs" }, "Block size in bytes");
+
+            Command command = new Command("mput", "upload a file using a Manifest, prefix remote paths with ion://");
+            command.Add(localFileArgument);
+            command.Add(folderArgument);
+            command.Add(nameOption);
+            command.Add(classificationOption);
+            command.Add(verboseOption);
+            command.Add(keyOption);
+            command.Add(passPhraseOption);
+            command.Add(blockSizeOption);
+            command.SetHandler(async (localfile, folder, name, classification, verbose, key, passphrase, blocksize) =>
+                {
+                    try
+                    {
+                        if (string.IsNullOrEmpty(localfile))
+                            throw new ArgumentNullException(nameof(localfile));
+                        if (string.IsNullOrEmpty(folder))
+                            throw new ArgumentNullException(nameof(folder));
+
+                        IonburstFS fs = new();
+                        fs.Verbose = verbose;
+                        //if (blocksize > 0)
+                        //{
+                        //    fs.MaxSize = blocksize;
+                        //}
+
+                        if (!string.IsNullOrEmpty(key))
+                        {
+                            IonFSCrypto crypto = new IonFSCrypto();
+                            crypto.KeyFromFile(key);
+
+                            fs.Encrypt = true;
+                            fs.KeyPath = key;
+                            fs.Crypto = crypto;
+                        }
+                        else if (!string.IsNullOrEmpty(passphrase))
+                        {
+                            IonFSCrypto crypto = new IonFSCrypto();
+                            crypto.KeyFromPassphrase(passphrase);
+
+                            fs.Encrypt = true;
+                            fs.Crypto = crypto;
+                        }
+
+                        IonFSObject fsoFrom = IonFSObject.FromLocalFile(localfile);
+                        IonFSObject fsoTo = fs.FromRemoteFolder(folder);
+                        string toName = "";
+                        if (!string.IsNullOrEmpty(name))
+                            toName = name;
+                        else
+                            toName = fsoFrom.Name;
+                        IonFSObject fsoNewTo = fs.FromRemoteFile(fsoTo.FullFSName + toName);
+
+                        if (fsoFrom.IsFolder)
+                        {
+                            Console.WriteLine("Cannot put a directory (yet)");
+                            return;
+                        }
+
+                        if (!string.IsNullOrEmpty(classification))
+                            fs.Classification = classification;
+
+                        var results = await fs.ManifestPutAsync(fsoFrom, fsoNewTo);
+
+                        if (!results.All(r => r.Value == 200))
+                        {
+                            Console.WriteLine($"Error sending data to Ionburst Cloud!");
+                            foreach (var r in results)
+                                Console.WriteLine($" {r.Key} {r.Value}");
+                        }
+                    }
+                    catch (RemoteFSException e)
+                    {
+                        Console.WriteLine("REMOTE EXCEPTION: {0}", e.Message);
+                    }
+                    catch (IonFSException e)
+                    {
+                        Console.WriteLine("IONFS EXCEPTION: {0}", e.Message);
+                    }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine(e.Message);
+                        if (e.InnerException != null)
+                            Console.WriteLine(e.InnerException.Message);
+                    }
+                }, localFileArgument, folderArgument, nameOption, classificationOption, verboseOption, keyOption,
+                passPhraseOption, blockSizeOption);
 
             return command;
         }
 
         private static Command SecretPut()
         {
-            Command command = new Command("put", "store data, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("secret", "secret to store") {Arity = ArgumentArity.ExactlyOne});
-            command.AddArgument(new Argument<string>("vault", "destination vault location, prefixed with ion://")
-                {Arity = ArgumentArity.ExactlyOne});
-            command.AddArgument(new Argument<string>("name", "name of secret") {Arity = ArgumentArity.ExactlyOne});
-            command.AddOption(new Option<string>(new[] {"--classification", "-c"}, "Ionburst Cloud Classification"));
-            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
-            command.AddOption(new Option<string>(new[] {"--key", "-k"}, "path to symmetric key"));
-            command.AddOption(new Option<string>(new[] {"--passphrase", "-pp"}, "passphrase to generate key"));
-            command.Handler = CommandHandler.Create<string, string, string, string, bool, string, string>(
-                async (data, vault, name, classification, verbose, key, passphrase) =>
+            var dataArgument = new Argument<string>("data", "data to store") { Arity = ArgumentArity.ExactlyOne };
+            var vaultArgument = new Argument<string>("vault", "destination vault location, prefixed with ion://")
+                { Arity = ArgumentArity.ExactlyOne };
+            var nameArgument = new Argument<string>("name", "name of secret") { Arity = ArgumentArity.ExactlyOne };
+
+            var classificationOption =
+                new Option<string>(new[] { "--classification", "-c" }, "Ionburst Cloud Classification");
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
+            var keyOption = new Option<string>(new[] { "--key", "-k" }, "path to symmetric key");
+            var passphraseOption = new Option<string>(new[] { "--passphrase", "-pp" }, "passphrase to generate key");
+
+            Command command = new Command("put", "store secret, prefix remote paths with ion://");
+            command.Add(dataArgument);
+            command.Add(vaultArgument);
+            command.Add(nameArgument);
+            command.Add(classificationOption);
+            command.Add(verboseOption);
+            command.Add(keyOption);
+            command.Add(passphraseOption);
+            command.SetHandler(async (data, vault, name, classification, verbose, key, passphrase) =>
                 {
                     IonburstFS fs = new IonburstFS();
                     fs.Verbose = verbose;
@@ -288,7 +498,7 @@ namespace IonFS
                         fs.Crypto = crypto;
                     }
 
-                    IonFSObject fsoFrom = new IonFSObject() {Text = data, IsText = true};
+                    IonFSObject fsoFrom = new IonFSObject() { Text = data, IsText = true };
                     IonFSObject fsoTo = fs.FromRemoteFolder(vault);
                     string toName = "";
                     if (!string.IsNullOrEmpty(name))
@@ -297,7 +507,6 @@ namespace IonFS
                         throw new IonFSException("name parameter is blank");
 
                     IonFSObject fsoNewTo = fs.FromRemoteFile(fsoTo.FullFSName + toName);
-
 
                     if (!string.IsNullOrEmpty(classification))
                         fs.Classification = classification;
@@ -321,95 +530,103 @@ namespace IonFS
                     {
                         Console.WriteLine(e.Message);
                     }
-                });
-
+                }, dataArgument, vaultArgument, nameArgument, classificationOption, verboseOption, keyOption,
+                passphraseOption);
 
             return command;
         }
 
         private static Command SecretGet()
         {
+            var fromArgument = new Argument<string>("from", "remote path to the source secret")
+                { Arity = ArgumentArity.ExactlyOne };
+
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
+            var keyOption = new Option<string>(new[] { "--key", "-k" }, "path to symmetric key");
+            var passphraseOption = new Option<string>(new[] { "--passphrase", "-pp" }, "passphrase to generate key");
+
             Command command = new Command("get", "retrieve secret, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("from", "remote path to the source data")
-                {Arity = ArgumentArity.ExactlyOne});
-            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
-            command.AddOption(new Option<string>(new[] {"--key", "-k"}, "path to symmetric key"));
-            command.AddOption(new Option<string>(new[] {"--passphrase", "-pp"}, "passphrase to generate key"));
-            command.Handler = CommandHandler.Create<string, bool, string, string>(
-                async (from, verbose, key, passphrase) =>
+            command.Add(fromArgument);
+            command.Add(verboseOption);
+            command.Add(keyOption);
+            command.Add(passphraseOption);
+            command.SetHandler(async (from, verbose, key, passphrase) =>
+            {
+                try
                 {
-                    try
+                    if (string.IsNullOrEmpty(from))
+                        throw new ArgumentNullException(nameof(from));
+
+                    IonburstFS fs = new IonburstFS { Verbose = verbose };
+
+                    if (!string.IsNullOrEmpty(key))
                     {
-                        if (string.IsNullOrEmpty(from))
-                            throw new ArgumentNullException(nameof(from));
+                        IonFSCrypto crypto = new IonFSCrypto();
+                        crypto.KeyFromFile(key);
 
-                        IonburstFS fs = new IonburstFS {Verbose = verbose};
-
-                        if (!string.IsNullOrEmpty(key))
-                        {
-                            IonFSCrypto crypto = new IonFSCrypto();
-                            crypto.KeyFromFile(key);
-
-                            fs.Encrypt = true;
-                            fs.KeyPath = key;
-                            fs.Crypto = crypto;
-                        }
-                        else if (!string.IsNullOrEmpty(passphrase))
-                        {
-                            IonFSCrypto crypto = new IonFSCrypto();
-                            crypto.KeyFromPassphrase(passphrase);
-
-                            fs.Encrypt = true;
-                            fs.Crypto = crypto;
-                        }
-
-                        IonFSObject fromFso = fs.FromRemoteFile(from);
-                        IonFSObject toFso = new IonFSObject() {IsText = true};
-
-                        var results = await fs.GetAsync(fromFso, toFso);
-
-                        Console.WriteLine(toFso.Text);
-
-                        if (!results.All(r => r.Value == 200))
-                        {
-                            Console.WriteLine($"Error receiving data from Ionburst Cloud!");
-                            foreach (var r in results)
-                                Console.WriteLine($" {r.Key} {r.Value}");
-                        }
+                        fs.Encrypt = true;
+                        fs.KeyPath = key;
+                        fs.Crypto = crypto;
                     }
-                    catch (RemoteFSException e)
+                    else if (!string.IsNullOrEmpty(passphrase))
                     {
-                        Console.WriteLine(e.Message);
-                    }
-                    catch (IonFSChecksumException e)
-                    {
-                        Console.WriteLine(e.Message);
-                    }
-                    catch (IonFSException e)
-                    {
-                        Console.WriteLine(e.Message);
+                        IonFSCrypto crypto = new IonFSCrypto();
+                        crypto.KeyFromPassphrase(passphrase);
+
+                        fs.Encrypt = true;
+                        fs.Crypto = crypto;
                     }
 
-                    return 0;
-                });
+                    IonFSObject fromFso = fs.FromRemoteFile(from);
+                    IonFSObject toFso = new IonFSObject() { IsText = true };
+
+                    var results = await fs.GetAsync(fromFso, toFso);
+
+                    Console.WriteLine(toFso.Text);
+
+                    if (!results.All(r => r.Value == 200))
+                    {
+                        Console.WriteLine($"Error receiving data from Ionburst Cloud!");
+                        foreach (var r in results)
+                            Console.WriteLine($" {r.Key} {r.Value}");
+                    }
+                }
+                catch (RemoteFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                catch (IonFSChecksumException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                catch (IonFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }, fromArgument, verboseOption, keyOption, passphraseOption);
 
             return command;
         }
 
         private static Command Del()
         {
+            var pathArgument = new Argument<string>("path", "path to remove") { Arity = ArgumentArity.ExactlyOne };
+
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
+            var recursiveOption = new Option<bool>(new[] { "--recursive", "-r" });
+
             Command command = new Command("del", "delete an object, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("path", "path to remove") {Arity = ArgumentArity.ExactlyOne});
-            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
-            command.AddOption(new Option<bool>(new[] {"--recursive", "-r"}));
-            command.Handler = CommandHandler.Create<string, bool, bool>(async (path, verbose, recursive) =>
+            command.Add(pathArgument);
+            command.Add(verboseOption);
+            command.Add(recursiveOption);
+            command.SetHandler(async (path, verbose, recursive) =>
             {
                 try
                 {
                     if (string.IsNullOrEmpty(path))
                         throw new ArgumentNullException(nameof(path));
 
-                    IonburstFS fs = new IonburstFS() {Verbose = verbose};
+                    IonburstFS fs = new IonburstFS() { Verbose = verbose };
                     IonFSObject fso = fs.FromRemoteFile(path);
 
                     if (fso.IsFolder)
@@ -428,40 +645,42 @@ namespace IonFS
                 catch (RemoteFSException e)
                 {
                     Console.WriteLine(e.Message);
-                    return 1;
                 }
                 catch (IonFSException e)
                 {
                     Console.WriteLine(e.Message);
-                    return 1;
                 }
-
-                return 0;
-            });
+            }, pathArgument, verboseOption, recursiveOption);
 
             return command;
         }
 
-        private static Command SecretDel()
+        private static Command ManifestDel()
         {
-            Command command = new Command("del", "delete a secret, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("name", "secret to remove") {Arity = ArgumentArity.ExactlyOne});
-            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
-            command.Handler = CommandHandler.Create<string, bool>(async (data, verbose) =>
+            var pathArgument = new Argument<string>("path", "path to remove") { Arity = ArgumentArity.ExactlyOne };
+
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
+            var recursiveOption = new Option<bool>(new[] { "--recursive", "-r" });
+
+            Command command = new Command("mdel", "delete an object using a Manifest, prefix remote paths with ion://");
+            command.Add(pathArgument);
+            command.Add(verboseOption);
+            command.Add(recursiveOption);
+            command.SetHandler(async (path, verbose, recursive) =>
             {
                 try
                 {
-                    if (string.IsNullOrEmpty(data))
-                        throw new ArgumentNullException(nameof(data));
+                    if (string.IsNullOrEmpty(path))
+                        throw new ArgumentNullException(nameof(path));
 
-                    IonburstFS fs = new IonburstFS() {Verbose = verbose};
-                    IonFSObject fso = fs.FromRemoteFile(data);
+                    IonburstFS fs = new IonburstFS() { Verbose = verbose };
+                    IonFSObject fso = fs.FromRemoteFile(path);
 
                     if (fso.IsFolder)
-                        await fs.DeleteDirAsync(fso, false);
+                        await fs.DeleteDirAsync(fso, recursive);
                     else
                     {
-                        var results = await fs.DelAsync(fso);
+                        var results = await fs.ManifestDelAsync(fso);
                         if (!results.All(r => r.Value == 200))
                         {
                             Console.WriteLine($"Error removing data from Ionburst Cloud!");
@@ -473,152 +692,202 @@ namespace IonFS
                 catch (RemoteFSException e)
                 {
                     Console.WriteLine(e.Message);
-                    return 1;
                 }
                 catch (IonFSException e)
                 {
                     Console.WriteLine(e.Message);
-                    return 1;
                 }
+            }, pathArgument, verboseOption, recursiveOption);
 
-                return 0;
-            });
+            return command;
+        }
+
+        private static Command SecretDel()
+        {
+            var dataArgument = new Argument<string>("data", "secret to remove") { Arity = ArgumentArity.ExactlyOne };
+
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
+
+            Command command = new Command("del", "delete a secret, prefix remote paths with ion://");
+            command.Add(dataArgument);
+            command.Add(verboseOption);
+            command.SetHandler(async (data, verbose) =>
+            {
+                try
+                {
+                    if (string.IsNullOrEmpty(data))
+                        throw new ArgumentNullException(nameof(data));
+
+                    IonburstFS fs = new IonburstFS() { Verbose = verbose };
+                    IonFSObject fso = fs.FromRemoteFile(data);
+
+                    if (fso.IsFolder)
+                        await fs.DeleteDirAsync(fso, false);
+                    else
+                    {
+                        var results = await fs.DelAsync(fso);
+                        if (!results.All(r => r.Value == 200))
+                        {
+                            Console.WriteLine($"Error removing secret from Ionburst Cloud!");
+                            foreach (var r in results)
+                                Console.WriteLine($" {r.Key} {r.Value}");
+                        }
+                    }
+                }
+                catch (RemoteFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                catch (IonFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }, dataArgument, verboseOption);
 
             return command;
         }
 
         private static Command Move()
         {
+            var fromArgument = new Argument<string>("from") { Arity = ArgumentArity.ExactlyOne };
+            var toArgument = new Argument<string>("to") { Arity = ArgumentArity.ExactlyOne };
+
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
+            var keyOption = new Option<string>(new[] { "--key", "-k" }, "path to symmetric key");
+            var passphraseOption = new Option<string>(new[] { "--passphrase", "-pp" }, "passphrase to generate key");
+
             Command command = new Command("move",
                 "move a file to/from a remote file system, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("from") {Arity = ArgumentArity.ExactlyOne});
-            command.AddArgument(new Argument<string>("to") {Arity = ArgumentArity.ExactlyOne});
-            //command.AddOption(new Option(new[] { "--name", "-n" }));
-            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
-            command.AddOption(new Option<string>(new[] {"--key", "-k"}, "path to symmetric key"));
-            command.AddOption(new Option<string>(new[] {"--passphrase", "-pp"}, "passphrase to generate key"));
-            command.Handler = CommandHandler.Create<string, string, bool, string, string>(
-                async (from, to, verbose, key, passphrase) =>
+            command.Add(fromArgument);
+            command.Add(toArgument);
+            //command.Add(new Option(new[] { "--name", "-n" }));
+            command.Add(verboseOption);
+            command.Add(keyOption);
+            command.Add(passphraseOption);
+            command.SetHandler(async (from, to, verbose, key, passphrase) =>
+            {
+                try
                 {
-                    try
+                    if (string.IsNullOrEmpty(from))
+                        throw new ArgumentNullException(nameof(from));
+                    if (string.IsNullOrEmpty(to))
+                        throw new ArgumentNullException(nameof(to));
+
+                    IonburstFS fs = new IonburstFS();
+
+                    if (!string.IsNullOrEmpty(key))
                     {
-                        if (string.IsNullOrEmpty(from))
-                            throw new ArgumentNullException(nameof(from));
-                        if (string.IsNullOrEmpty(to))
-                            throw new ArgumentNullException(nameof(to));
+                        IonFSCrypto crypto = new IonFSCrypto();
+                        crypto.KeyFromFile(key);
 
-                        IonburstFS fs = new IonburstFS();
-
-                        if (!string.IsNullOrEmpty(key))
-                        {
-                            IonFSCrypto crypto = new IonFSCrypto();
-                            crypto.KeyFromFile(key);
-
-                            fs.Encrypt = true;
-                            fs.KeyPath = key;
-                            fs.Crypto = crypto;
-                        }
-                        else if (!string.IsNullOrEmpty(passphrase))
-                        {
-                            IonFSCrypto crypto = new IonFSCrypto();
-                            crypto.KeyFromPassphrase(passphrase);
-
-                            fs.Encrypt = true;
-                            fs.Crypto = crypto;
-                        }
-
-                        IonFSObject fromFso = fs.FromRemoteFile(from);
-                        IonFSObject toFso = fs.FromRemoteFile(to);
-
-                        await fs.MoveAsync(fromFso, toFso);
+                        fs.Encrypt = true;
+                        fs.KeyPath = key;
+                        fs.Crypto = crypto;
                     }
-                    catch (RemoteFSException e)
+                    else if (!string.IsNullOrEmpty(passphrase))
                     {
-                        Console.WriteLine(e.Message);
-                    }
-                    catch (IonFSException e)
-                    {
-                        Console.WriteLine(e.Message);
+                        IonFSCrypto crypto = new IonFSCrypto();
+                        crypto.KeyFromPassphrase(passphrase);
+
+                        fs.Encrypt = true;
+                        fs.Crypto = crypto;
                     }
 
-                    return 0;
-                });
+                    IonFSObject fromFso = fs.FromRemoteFile(from);
+                    IonFSObject toFso = fs.FromRemoteFile(to);
+
+                    await fs.MoveAsync(fromFso, toFso);
+                }
+                catch (RemoteFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                catch (IonFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }, fromArgument, toArgument, verboseOption, keyOption, passphraseOption);
 
             return command;
         }
 
         private static Command Copy()
         {
+            var fromArgument = new Argument<string>("from") { Arity = ArgumentArity.ExactlyOne };
+            var toArgument = new Argument<string>("to") { Arity = ArgumentArity.ExactlyOne };
+
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
+            var keyOption = new Option<string>(new[] { "--key", "-k" }, "path to symmetric key");
+            var passphraseOption = new Option<string>(new[] { "--passphrase", "-pp" }, "passphrase to generate key");
+
             Command command = new Command("copy",
                 "copy a file to/from a remote file system, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("from") {Arity = ArgumentArity.ExactlyOne});
-            command.AddArgument(new Argument<string>("to") {Arity = ArgumentArity.ExactlyOne});
+            command.Add(fromArgument);
+            command.Add(toArgument);
             //command.AddOption(new Option<string>(new[] { "--name", "-n" }, "new filename"));
-            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
-            command.AddOption(new Option<string>(new[] {"--key", "-k"}, "path to symmetric key"));
-            command.AddOption(new Option<string>(new[] {"--passphrase", "-pp"}, "passphrase to generate key"));
-            command.Handler = CommandHandler.Create<string, string, bool, string, string>(
-                async (from, to, verbose, key, passphrase) =>
+            command.Add(verboseOption);
+            command.Add(keyOption);
+            command.Add(passphraseOption);
+            command.SetHandler(async (from, to, verbose, key, passphrase) =>
+            {
+                try
                 {
-                    try
+                    if (string.IsNullOrEmpty(from))
+                        throw new ArgumentNullException(nameof(from));
+                    if (string.IsNullOrEmpty(to))
+                        throw new ArgumentNullException(nameof(to));
+
+                    IonburstFS fs = new IonburstFS { Verbose = verbose };
+
+                    if (!string.IsNullOrEmpty(key))
                     {
-                        if (string.IsNullOrEmpty(from))
-                            throw new ArgumentNullException(nameof(from));
-                        if (string.IsNullOrEmpty(to))
-                            throw new ArgumentNullException(nameof(to));
+                        IonFSCrypto crypto = new IonFSCrypto();
+                        crypto.KeyFromFile(key);
 
-                        IonburstFS fs = new IonburstFS {Verbose = verbose};
-
-                        if (!string.IsNullOrEmpty(key))
-                        {
-                            IonFSCrypto crypto = new IonFSCrypto();
-                            crypto.KeyFromFile(key);
-
-                            fs.Encrypt = true;
-                            fs.KeyPath = key;
-                            fs.Crypto = crypto;
-                        }
-                        else if (!string.IsNullOrEmpty(passphrase))
-                        {
-                            IonFSCrypto crypto = new IonFSCrypto();
-                            crypto.KeyFromPassphrase(passphrase);
-
-                            fs.Encrypt = true;
-                            fs.Crypto = crypto;
-                        }
-
-                        IonFSObject fromFso = fs.FromString(from);
-                        IonFSObject toFso = fs.FromString(to);
-
-                        await fs.CopyAsync(fromFso, toFso);
+                        fs.Encrypt = true;
+                        fs.KeyPath = key;
+                        fs.Crypto = crypto;
                     }
-                    catch (RemoteFSException e)
+                    else if (!string.IsNullOrEmpty(passphrase))
                     {
-                        Console.WriteLine(e.Message);
-                    }
-                    catch (IonFSException e)
-                    {
-                        Console.WriteLine(e.Message);
+                        IonFSCrypto crypto = new IonFSCrypto();
+                        crypto.KeyFromPassphrase(passphrase);
+
+                        fs.Encrypt = true;
+                        fs.Crypto = crypto;
                     }
 
-                    return 0;
-                });
+                    IonFSObject fromFso = fs.FromString(from);
+                    IonFSObject toFso = fs.FromString(to);
+
+                    await fs.CopyAsync(fromFso, toFso);
+                }
+                catch (RemoteFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                catch (IonFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }, fromArgument, toArgument, verboseOption, keyOption, passphraseOption);
 
             return command;
         }
 
         private static Command MakeDir()
         {
+            var folderArgument = new Argument<string>("folder") { Arity = ArgumentArity.ExactlyOne };
             Command command = new Command("mkdir", "create a folder, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("folder") {Arity = ArgumentArity.ExactlyOne});
-            command.Handler = CommandHandler.Create<string>(async (folder) =>
+            command.Add(folderArgument);
+            command.SetHandler(async (folder) =>
             {
                 try
                 {
                     if (string.IsNullOrEmpty(folder))
                         throw new ArgumentNullException(nameof(folder));
 
-                    IonburstFS fs = new IonburstFS();
+                    IonburstFS fs = new();
                     IonFSObject fso = fs.FromRemoteFolder(folder);
 
                     await fs.MakeDirAsync(fso);
@@ -626,29 +895,31 @@ namespace IonFS
                 catch (RemoteFSException e)
                 {
                     Console.WriteLine(e.Message);
-                    return 1;
                 }
-
-                return 0;
-            });
+            }, folderArgument);
 
             return command;
         }
 
         private static Command RemoveDir()
         {
-            Command command = new Command("rmdir", "remove a folder, prefix remote paths with ion://");
-            command.AddArgument(new Argument<string>("folder") {Arity = ArgumentArity.ExactlyOne});
-            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
-            command.AddOption(new Option<bool>(new[] {"--recursive", "-r"}));
-            command.Handler = CommandHandler.Create<string, bool, bool>(async (folder, verbose, recursive) =>
+            var folderArgument = new Argument<string>("folder") { Arity = ArgumentArity.ExactlyOne };
+
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
+            var recursiveOption = new Option<bool>(new[] { "--recursive", "-r" });
+
+            Command command = new("rmdir", "remove a folder, prefix remote paths with ion://");
+            command.Add(folderArgument);
+            command.Add(verboseOption);
+            command.Add(recursiveOption);
+            command.SetHandler(async (folder, verbose, recursive) =>
             {
                 try
                 {
                     if (string.IsNullOrEmpty(folder))
                         throw new ArgumentNullException(nameof(folder));
 
-                    IonburstFS fs = new IonburstFS() {Verbose = verbose};
+                    IonburstFS fs = new IonburstFS() { Verbose = verbose };
                     IonFSObject fso = fs.FromRemoteFolder(folder);
 
                     await fs.DeleteDirAsync(fso, recursive);
@@ -661,58 +932,64 @@ namespace IonFS
                 {
                     Console.WriteLine($"*** ERROR: {e.Message}");
                 }
-
-                return 0;
-            });
+            }, folderArgument, verboseOption, recursiveOption);
 
             return command;
         }
 
         private static Command DeleteById()
         {
-            Command command = new Command("rm-id") {IsHidden = true};
-            command.AddArgument(new Argument<string>("guid") {Arity = ArgumentArity.ZeroOrOne});
-            command.Handler = CommandHandler.Create<Guid>(async (guid) =>
+            var guidArgument = new Argument<string>("guid") { Arity = ArgumentArity.ExactlyOne };
+
+            Command command = new("rm-id") { IsHidden = true };
+            command.Add(guidArgument);
+            command.SetHandler(async (guid) =>
             {
                 if (guid == null)
                     throw new ArgumentNullException(nameof(guid));
 
                 IonburstFS fs = new IonburstFS();
-                await fs.RemoveById(guid);
-            });
+                await fs.RemoveById(Guid.Parse(guid));
+            }, guidArgument);
 
             return command;
         }
 
         private static Command GetChunkById()
         {
-            Command command = new Command("get-id") {IsHidden = true};
-            command.AddArgument(new Argument<string>("guid") {Arity = ArgumentArity.ZeroOrOne});
-            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
-            command.Handler = CommandHandler.Create<Guid, bool>(async (guid, verbose) =>
+            var guidArgument = new Argument<string>("guid") { Arity = ArgumentArity.ExactlyOne };
+
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
+
+            Command command = new("get-id") { IsHidden = true };
+            command.Add(guidArgument);
+            command.Add(verboseOption);
+            command.SetHandler(async (guid, verbose) =>
             {
                 if (guid == null)
                     throw new ArgumentNullException(nameof(guid));
 
-                IonburstFS fs = new IonburstFS {Verbose = verbose};
-                var results = await fs.GetChunk(guid);
+                IonburstFS fs = new() { Verbose = verbose };
+                var results = await fs.GetChunk(Guid.Parse(guid));
 
                 if (!results.All(r => r.Value == 200))
                 {
                     Console.WriteLine($"Error receiving data from Ionburst Cloud!");
-                    foreach (var r in results)
+                    foreach (KeyValuePair<Guid, int> r in results)
                         Console.WriteLine($" {r.Key} {r.Value}");
                 }
-            });
+            }, guidArgument, verboseOption);
 
             return command;
         }
 
         private static Command DeleteMetadata()
         {
-            Command command = new Command("rm-meta") {IsHidden = true};
-            command.AddArgument(new Argument<string>("file") {Arity = ArgumentArity.ZeroOrOne});
-            command.Handler = CommandHandler.Create<string>(async (file) =>
+            var fileArgument = new Argument<string>("file") { Arity = ArgumentArity.ExactlyOne };
+
+            Command command = new("rm-meta") { IsHidden = true };
+            command.Add(fileArgument);
+            command.SetHandler(async (file) =>
             {
                 if (file == null)
                     throw new ArgumentNullException(nameof(file));
@@ -721,18 +998,22 @@ namespace IonFS
                 IonFSObject fso = fs.FromRemoteFile(file);
 
                 await fs.RemoveMetadata(fso);
-            });
+            }, fileArgument);
 
             return command;
         }
 
         private static Command GetMetadata()
         {
-            Command command = new Command("meta") {IsHidden = true};
-            command.AddArgument(new Argument<string>("file", "prefix remote paths with ion://")
-                {Arity = ArgumentArity.ZeroOrOne});
-            command.AddOption(new Option(new[] {"--quiet", "-q"}));
-            command.Handler = CommandHandler.Create<string, bool>(async (file, quiet) =>
+            var fileArgument = new Argument<string>("file", "prefix remote paths with ion://")
+                { Arity = ArgumentArity.ZeroOrOne };
+
+            var quietOption = new Option<bool>(new[] { "--quiet", "-q" });
+
+            Command command = new("meta") { IsHidden = true };
+            command.Add(fileArgument);
+            command.Add(quietOption);
+            command.SetHandler(async (file, quiet) =>
             {
                 if (string.IsNullOrEmpty(file))
                     throw new ArgumentNullException(nameof(file));
@@ -752,34 +1033,34 @@ namespace IonFS
                 catch (RemoteFSException e)
                 {
                     Console.WriteLine(e.Message);
-                    return 1;
                 }
                 catch (IonFSException e)
                 {
                     Console.WriteLine(e.Message);
-                    return 1;
                 }
                 catch (ArgumentNullException e)
                 {
                     Console.WriteLine(e.Message);
-                    return 1;
                 }
-
-                return 0;
-            });
+            }, fileArgument, quietOption);
 
             return command;
         }
 
         private static Command AddMetadata()
         {
-            Command command = new Command("add-meta", "") {IsHidden = true};
-            command.AddArgument(new Argument<string>("metadata", "metadata file to upload")
-                {Arity = ArgumentArity.ExactlyOne});
-            command.AddArgument(new Argument<string>("folder", "destination folder, prefixed with ion://")
-                {Arity = ArgumentArity.ExactlyOne});
-            command.AddOption(new Option<bool>(new[] {"--verbose", "-v"}));
-            command.Handler = CommandHandler.Create<string, string, bool>(async (metadata, folder, verbose) =>
+            var metadataArgument = new Argument<string>("metadata", "metadata object to upload")
+                { Arity = ArgumentArity.ExactlyOne };
+            var folderArgument = new Argument<string>("folder", "destination folder, prefixed with ion://")
+                { Arity = ArgumentArity.ExactlyOne };
+
+            var verboseOption = new Option<bool>(new[] { "--verbose" });
+
+            Command command = new("add-meta", "") { IsHidden = true };
+            command.Add(metadataArgument);
+            command.Add(folderArgument);
+            command.Add(verboseOption);
+            command.SetHandler(async (metadata, folder, verbose) =>
             {
                 try
                 {
@@ -800,27 +1081,23 @@ namespace IonFS
                 {
                     Console.WriteLine(e.Message);
                 }
-
-                return 0;
-            });
+            }, metadataArgument, folderArgument, verboseOption);
 
             return command;
         }
 
         private static Command GetClassifications()
         {
-            Command command = new Command("policy", "list the current Ionburst Cloud Classification Policies")
-                {IsHidden = false};
-            command.Handler = CommandHandler.Create(new Action(async () =>
+            Command command = new("policy", "list the current Ionburst Cloud Classification Policies") { IsHidden = false };
+            command.SetHandler(async () =>
             {
                 try
                 {
-                    IonburstFS fs = new IonburstFS();
+                    IonburstFS fs = new();
 
                     Console.WriteLine(Logo());
 
                     var classifications = await fs.GetClassifications();
-
 
                     Console.WriteLine("Available Classifications:\n");
                     foreach (var c in classifications.OrderBy(x => x.Key))
@@ -831,23 +1108,20 @@ namespace IonFS
                 catch (RemoteFSException e)
                 {
                     Console.WriteLine(e.Message);
-                    //return 1;
                 }
-
-                //return 0;
-            }));
+            });
 
             return command;
         }
 
         private static Command GetRepos()
         {
-            Command command = new Command("repos", "list the currently registered Repositories") {IsHidden = false};
-            command.Handler = CommandHandler.Create(new Action(() =>
+            Command command = new("repos", "list the currently registered Repositories") { IsHidden = false };
+            command.SetHandler(() =>
             {
                 try
                 {
-                    IonburstFS fs = new IonburstFS();
+                    IonburstFS fs = new();
 
                     Console.WriteLine(Logo());
                     Console.WriteLine($"Available Repositories (*default):\n");
@@ -862,20 +1136,20 @@ namespace IonFS
                 catch (IonFSException e)
                 {
                     Console.WriteLine(e.Message);
-                    //return 1;
                 }
-
-                //return 0;
-            }));
+            });
 
             return command;
         }
 
         private static Command KeyGen()
+
         {
-            Command command = new Command("keygen") {IsHidden = true};
-            command.AddArgument(new Argument<string>("passphrase") {Arity = ArgumentArity.ExactlyOne});
-            command.Handler = CommandHandler.Create<string>((passphrase) =>
+            var passphraseArgument = new Argument<string>("passphrase") { Arity = ArgumentArity.ExactlyOne };
+
+            Command command = new Command("keygen") { IsHidden = true };
+            command.Add(passphraseArgument);
+            command.SetHandler((passphrase) =>
             {
                 try
                 {
@@ -886,11 +1160,8 @@ namespace IonFS
                 catch (RemoteFSException e)
                 {
                     Console.WriteLine(e.Message);
-                    return 1;
                 }
-
-                return 0;
-            });
+            }, passphraseArgument);
 
             return command;
         }
@@ -915,9 +1186,10 @@ namespace IonFS
         {
             try
             {
+                var infoOption = new Option<bool>(new[] { "--info", "-i" });
                 var command = new RootCommand("Securing your data on Ionburst Cloud.");
-                command.AddOption(new Option(new[] { "--info", "-i" }));
-                command.Handler = CommandHandler.Create<IConsole, bool>((console, info) =>
+                command.Add(infoOption);
+                command.SetHandler((info) =>
                 {
                     Console.WriteLine(Logo());
                     Console.WriteLine($"We may guard your data, but we'll never take its freedom!");
@@ -945,14 +1217,17 @@ namespace IonFS
                             Console.WriteLine(e.Message);
                         }
                     }
-                });
+                }, infoOption);
 
                 #region Register Commands
 
                 command.AddCommand(List());
                 command.AddCommand(Get());
                 command.AddCommand(Put());
+                command.AddCommand(ManifestGet());
+                command.AddCommand(ManifestPut());
                 command.AddCommand(Del());
+                command.AddCommand(ManifestDel());
                 command.AddCommand(Move());
                 command.AddCommand(Copy());
                 command.AddCommand(MakeDir());
@@ -977,6 +1252,8 @@ namespace IonFS
                 command.AddCommand(secrets);
 
                 command.InvokeAsync(args).Wait();
+
+                Console.WriteLine();
             }
             catch (RemoteFSException e)
             {
