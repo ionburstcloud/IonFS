@@ -2,6 +2,17 @@
 
 <!--- next entry here -->
 
+## 0.3.0-develop.5
+2022-08-09
+
+### Features
+
+- @jamiejshunter updates for manifest (8b042c3e62691170782b1743b9ab63aafef1ef09)
+
+### Fixes
+
+- @jamiejshunter updates - repo/policy commands, system.commandline (bd6189c49f276db05a383092255b95504437027d)
+
 ## 0.3.0-develop.4
 2022-03-11
 
