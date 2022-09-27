@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net5.0</TargetFramework>
+    <TargetFramework>net6.0</TargetFramework>
     <Authors>Jamie Hunter</Authors>
     <Company>Ionburst Limited</Company>
     <Product>IonFS</Product>
@@ -13,7 +13,8 @@
 
   <ItemGroup>
     <PackageReference Include="Figgle" Version="0.4.0" />
-    <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.20574.7" />
+    <PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+    <PackageReference Include="System.CommandLine.NamingConventionBinder" Version="2.0.0-beta4.22272.1" />
   </ItemGroup>
 
   <ItemGroup>
@@ -21,6 +22,9 @@
     <ProjectReference Include="..\Ionburst.Apps.IonFS.Model\Ionburst.Apps.IonFS.Model.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Remove="System.CommandLine.NamingConventionBinder" />
+  </ItemGroup>
   <ItemGroup>
     <None Update="appsettings.Development.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

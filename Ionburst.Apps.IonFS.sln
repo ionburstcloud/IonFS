@@ -8,6 +8,9 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 		.gitlab-ci.yml = .gitlab-ci.yml
 		.editorconfig = .editorconfig
 		README.md = README.md
+		allowed_signers = allowed_signers
+		.gon.hcl = .gon.hcl
+		ionfs.entitlements = ionfs.entitlements
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ionburst.Apps.IonFS.Model", "Ionburst.Apps.IonFS.Model\Ionburst.Apps.IonFS.Model.csproj", "{2396B3E3-EA79-4AB8-BAE8-174364989FAF}"
@@ -21,6 +24,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ionburst.Apps.IonFS.Repo.MongoDB", "Ionburst.Apps.IonFS.Repo.MongoDB\Ionburst.Apps.IonFS.Repo.MongoDB.csproj", "{DD523136-495D-408B-A172-EDA822146AB3}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ionburst.Apps.IonFS.Tests", "Ionburst.Apps.IonFS.Tests\Ionburst.Apps.IonFS.Tests.csproj", "{0435B679-2745-4EFF-A5E7-3302970C8129}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Ionburst.Apps.IonFS.Repo.LocalFS", "Ionburst.Apps.IonFS.Repo.LocalFS\Ionburst.Apps.IonFS.Repo.LocalFS.csproj", "{FC39C840-D792-48F7-8683-893093DFF5C6}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -52,6 +57,10 @@ Global
 		{0435B679-2745-4EFF-A5E7-3302970C8129}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0435B679-2745-4EFF-A5E7-3302970C8129}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0435B679-2745-4EFF-A5E7-3302970C8129}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FC39C840-D792-48F7-8683-893093DFF5C6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FC39C840-D792-48F7-8683-893093DFF5C6}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FC39C840-D792-48F7-8683-893093DFF5C6}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FC39C840-D792-48F7-8683-893093DFF5C6}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

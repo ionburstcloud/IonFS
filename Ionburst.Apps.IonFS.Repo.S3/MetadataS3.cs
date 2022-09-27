@@ -88,7 +88,8 @@ namespace Ionburst.Apps.IonFS.Repo.S3
                 s3.ListObjectsV2Request request = new s3.ListObjectsV2Request
                 {
                     BucketName = s3.GetBucket(),
-                    Prefix = fso.FullName
+                    Prefix = fso.FullName,
+                    Delimiter = "/"
                 };
                 s3.ListObjectsV2Response response;
 
@@ -109,7 +110,7 @@ namespace Ionburst.Apps.IonFS.Repo.S3
             }
             catch (Exception e)
             {
-                Console.WriteLine(e.Message);
+                throw e;
             }
 
             return exists;
