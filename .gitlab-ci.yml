@@ -143,6 +143,7 @@ build_mac_arm64:
   allow_failure: false
   only:
     - develop
+    - main
   tags:
     - mac-arm64
 
