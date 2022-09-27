@@ -2,6 +2,29 @@
 
 <!--- next entry here -->
 
+## 0.3.0
+2022-09-27
+
+### Features
+
+- @jamiejshunter finalised local filesystem metadata repository work (a6d131089c30601bf0ea3f149fa0f1524d1240ce)
+- @jamiejshunter updates for manifest (8b042c3e62691170782b1743b9ab63aafef1ef09)
+
+### Fixes
+
+- add build for M1 macs - develop branch only (780378044dd7a1f0dca29c7ef3b1e3269cd30482)
+- update ionfs packages to net6.0 (bc20e17f6ade7f04cab6f90555f2b01cc4545d31)
+- update dependencies for .net6.0 (ca240815760a10892e25f56c48521db20c7b6c92)
+- add Microsoft.Extensions.Configuration.Binder for upgrade to net6.0 (3e8f19ba0bfcb4293b5e16591dc5c3e27e5a5eb0)
+- minor package updates and @jamiejshunter updates to IonFS (b05273cbab9d8049641dbb3753f8fe18965389b9)
+- minor fixes, initial LocalFS repo (eb66aa771de247f8a738c992a0eb31194675a241)
+- @jamiejshunter bug fix for S3 Metadata Exists (35b959495ea4447bd38fcad1c830b646c41b0962)
+- @jamiejshunter fixes for ListAsync (2fad6eb2f274bc81820db2a1d60a549b72e95744)
+- upgrade Ionburst.SDK to 1.2.6 - fixes assembly version issue (1c5c19ba25eb49ccf19cc0843d0d59ae461b3b05)
+- update System.CommandLine package (b4682296b3065a35bd7d47de159352f2c3fac3f1)
+- remove unnecessary trailing slash from list output (5a260e0ad38193836ef990a7c9cd38de3a2da297)
+- @jamiejshunter updates - repo/policy commands, system.commandline (bd6189c49f276db05a383092255b95504437027d)
+
 ## 0.3.0-develop.5
 2022-08-09
 
