@@ -231,18 +231,20 @@ namespace Ionburst.Apps.IonFS.Repo.Mongo
             {
                 if (metadata != null)
                 {
+                    String data = JsonConvert.SerializeObject(metadata, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+
                     IMongoDBIonFSMetadata obj = new MongoDBIonFSMetadata
                     {
                         _id = ObjectId.GenerateNewId(),
                         Key = folder.FullName,
-                        Metadata = JsonConvert.SerializeObject(metadata),
+                        Metadata = (data),
                         LastModified = DateTime.UtcNow
                     };
 
                     IMongoCollection<IMongoDBIonFSMetadata> objectMetadata = _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
                     await objectMetadata.InsertOneAsync(obj);
 
-                    if (Verbose) Console.WriteLine(JsonConvert.SerializeObject(metadata));
+                    if (Verbose) Console.WriteLine(data);
                 }
                 else
                     throw new Exception("metadata is null");

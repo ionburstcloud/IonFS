@@ -254,18 +254,20 @@ namespace Ionburst.Apps.IonFS.Repo.S3
                 {
                     if (string.IsNullOrEmpty(folder.Name)) folder.Name = metadata.Name;
 
+                    String data = JsonConvert.SerializeObject(metadata, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+
                     s3.PutObjectRequest s3PutRequest = new s3.PutObjectRequest
                     {
                         BucketName = s3.GetBucket(),
                         Key = folder.FullName,
-                        ContentBody = JsonConvert.SerializeObject(metadata)
+                        ContentBody = data
                     };
 
                     var t = s3.S3;
                     s3.PutObjectResponse response = t.PutObjectAsync(s3PutRequest).Result;
                     //s3.PutObjectResponse response = await s3.S3.PutObjectAsync(s3PutRequest);
 
-                    if (Verbose) Console.WriteLine(JsonConvert.SerializeObject(metadata));
+                    if (Verbose) Console.WriteLine(data);
                 }
                 else
                     throw new IonFSException("metadata is null");

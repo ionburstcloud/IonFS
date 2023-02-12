@@ -32,6 +32,9 @@ namespace Ionburst.Apps.IonFS.Model
         [JsonProperty]
         public string IV { get; set; }
 
+        [JsonProperty]
+        public bool IsManifest { get; set; }
+
         public override string ToString()
         {
             return JsonConvert.SerializeObject(this, Formatting.Indented);

@@ -44,6 +44,8 @@ namespace Ionburst.Apps.IonFS
 
         public IonFSCrypto Crypto { get; set; }
 
+        public Boolean UseManifest { get; set; }
+
         private struct Burst
         {
             public long start;
@@ -71,7 +73,12 @@ namespace Ionburst.Apps.IonFS
                 .AddEnvironmentVariables()
                 .Build();
 
-            Verbose = bool.Parse(config["IonFS:Verbose"]);
+            _ = bool.TryParse(config["IonFS:Verbose"], out bool verboseConfig);
+            Verbose = verboseConfig;
+
+            _ = bool.TryParse(config["IonFS:UseManifest"], out bool useManifestConfig);
+            UseManifest = useManifestConfig;
+
             MaxSize = long.Parse(config["IonFS:MaxSize"], NumberStyles.Integer);
             Classification = config["IonFS:DefaultClassification"];
             Encrypt = false;
@@ -83,7 +90,7 @@ namespace Ionburst.Apps.IonFS
             Repositories = new List<IonFSRepository>();
             foreach (IonFSRepositoryConfiguration configuredRepository in configuredRepositories)
             {
-                IonFSRepository newRepository = new IonFSRepository
+                IonFSRepository newRepository = new()
                 {
                     Repository = configuredRepository.Name,
                     Usage = configuredRepository.Usage,
@@ -92,20 +99,15 @@ namespace Ionburst.Apps.IonFS
 
                 //Type t = Type.GetType(configuredRepository.Class, Assembly.LoadFrom(configuredRepository.Assembly), );
 
-                //Assembly assem = Assembly.LoadFrom(configuredRepository.Assembly);
-
-                AssemblyName assemName = new AssemblyName()
-                {
-                    Name = configuredRepository.Assembly
-                };
-                Assembly assem = Assembly.Load(assemName);
+                Assembly assem = Assembly.LoadFrom(configuredRepository.Assembly);
 
                 Type t = Type.GetType(configuredRepository.Class,
                     (name) => Assembly.LoadFrom(configuredRepository.Assembly),
                     (a, b, c) => assem.GetType(configuredRepository.Class, true, false)
                 );
 
-                newRepository.Metadata = (IIonFSMetadata)Activator.CreateInstance(t, configuredRepository.DataStore, configuredRepository.Name, configuredRepository.Usage);
+                newRepository.Metadata = (IIonFSMetadata) Activator.CreateInstance(t, configuredRepository.DataStore,
+                    configuredRepository.Name, configuredRepository.Usage);
                 Repositories.Add(newRepository);
             }
 
@@ -220,38 +222,58 @@ namespace Ionburst.Apps.IonFS
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
 
-            HashSet<KeyValuePair<Guid, int>> ids = new HashSet<KeyValuePair<Guid, int>>();
+            HashSet<KeyValuePair<Guid, int>> ids = new();
 
             try
             {
                 IIonFSMetadata mh = GetMetadataHandler(file);
                 IonFSMetadata metadata = await mh.GetMetadata(file);
 
-                _ = Parallel.ForEach(metadata.Id, async (id) =>
+                if (metadata.IsManifest && !(mh.Usage == "Secrets"))
+                {
+                    ion.DeleteManifestRequest delManifestRequest = new()
                     {
-                        // Ionburst
-                        ion.DeleteObjectRequest delRequest = new ion.DeleteObjectRequest
-                        {
-                            Particle = id.ToString(),
-                            TimeoutSpecified = true,
-                            RequestTimeout = new TimeSpan(0, 2, 0)
-                        };
+                        Particle = metadata.Id.First().ToString(),
+                        TimeoutSpecified = true,
+                        RequestTimeout = new TimeSpan(0, 2, 0)
+                    };
 
-                        ion.DeleteObjectResult delResult;
-                        if (mh.Usage == "Secrets")
-                        {
-                            delResult = await GetIonburst().SecretsDeleteAsync(delRequest);
-                        }
-                        else
-                        {
-                            delResult = await GetIonburst().DeleteAsync(delRequest);
-                        }
+                    ion.DeleteManifestResult delManifestResult;
+                    delManifestResult = await GetIonburst().DeleteAsync(delManifestRequest) as ion.DeleteManifestResult;
 
-                        ids.Add(new KeyValuePair<Guid, int>(id, delResult.StatusCode));
-                        if (Verbose)
-                            Console.WriteLine($"{id} {delResult.StatusCode} {delResult.StatusMessage}");
-                    }
-                );
+                    ids.Add(new KeyValuePair<Guid, int>(metadata.Id.First(), delManifestResult.StatusCode));
+                    if (Verbose)
+                        Console.WriteLine(
+                            $"{metadata.Id.First()} {delManifestResult.StatusCode} {delManifestResult.StatusMessage}");
+                }
+                else
+                {
+                    _ = Parallel.ForEach(metadata.Id, async (id) =>
+                        {
+                            // Ionburst
+                            ion.DeleteObjectRequest delRequest = new ion.DeleteObjectRequest
+                            {
+                                Particle = id.ToString(),
+                                TimeoutSpecified = true,
+                                RequestTimeout = new TimeSpan(0, 2, 0)
+                            };
+
+                            ion.DeleteObjectResult delResult;
+                            if (mh.Usage == "Secrets")
+                            {
+                                delResult = await GetIonburst().SecretsDeleteAsync(delRequest);
+                            }
+                            else
+                            {
+                                delResult = await GetIonburst().DeleteAsync(delRequest);
+                            }
+
+                            ids.Add(new KeyValuePair<Guid, int>(id, delResult.StatusCode));
+                            if (Verbose)
+                                Console.WriteLine($"{id} {delResult.StatusCode} {delResult.StatusMessage}");
+                        }
+                    );
+                }
 
                 if (ids.All(id => id.Value == 200))
                 {
@@ -310,6 +332,8 @@ namespace Ionburst.Apps.IonFS
                 // Encrypt
                 if (Encrypt)
                 {
+                    if (Verbose) Console.WriteLine("Encrypting...");
+
                     using Aes a = Aes.Create();
 
                     metadata.IV = Convert.ToBase64String(a.IV);
@@ -333,89 +357,123 @@ namespace Ionburst.Apps.IonFS
                     metadata.Hash = Convert.ToBase64String(hashBytes);
                 }
 
-
-                // Begin Spliting of large data
-                long size = data.Length;
-                long offset = MaxSize;
-                var bursts = new List<Burst>();
-
-                long chunks = (size / offset) + (size % offset > 0 ? 1 : 0);
-                metadata.ChunkCount = chunks;
-                metadata.MaxSize = MaxSize;
-                metadata.Size = size;
-
-                if (Verbose)
+                if (UseManifest && !source.IsText)
                 {
-                    Console.WriteLine("File: {0} is {1} bytes", source.FullName, size);
-                    Console.WriteLine("SHA256: '{0}'", metadata.Hash);
-                    Console.WriteLine("Splitting into {0} chunks: {1}", chunks, offset);
-                }
+                    if (Verbose) Console.WriteLine("Using Manifest...");
 
-                using (BinaryReader binaryReader = new BinaryReader(data))
-                {
-                    int i = 0;
-                    for (long l = 0; l < size; l += offset)
+                    long size = data.Length;
+                    metadata.ChunkCount = 1;
+                    metadata.MaxSize = MaxSize;
+                    metadata.Size = size;
+                    metadata.IsManifest = true;
+
+                    if (Verbose)
                     {
-                        long boundary = l + offset;
-                        if (boundary > size)
-                            boundary = size;
-
-                        Guid guid = Guid.NewGuid();
-                        if (Verbose)
-                            Console.WriteLine("Chunk[{2}]:[{4}:{3}] {0} - {1}", l, boundary - 1, i++, boundary - l,
-                                guid);
-
-                        Burst burst = new Burst { start = l, end = boundary, size = boundary - l, id = guid };
-
-                        var buffer = new byte[burst.size];
-                        binaryReader.BaseStream.Seek(burst.start, SeekOrigin.Begin);
-                        binaryReader.Read(buffer, 0, (int)burst.size);
-
-                        burst.data = buffer;
-
-                        bursts.Add(burst);
-                        metadata.Id.Add(guid);
+                        Console.WriteLine("File: {0} is {1} bytes", source.FullName, size);
+                        Console.WriteLine("SHA256: '{0}'", metadata.Hash);
                     }
-                }
 
-                ParallelOptions parallelOptions = new ParallelOptions() { MaxDegreeOfParallelism = 8 };
-                Parallel.ForEach(bursts, parallelOptions, (burst) =>
+                    Guid guid = Guid.NewGuid();
+                    ion.PutManifestRequest putManifestRequest = new()
                     {
-                        // Ionburst
-                        ion.PutObjectRequest putObjectRequest = new ion.PutObjectRequest()
-                        {
-                            PolicyClassification = Classification,
-                            Particle = burst.id.ToString()
-                        };
+                        Particle = guid.ToString(),
+                        ChunkSize = MaxSize,
+                        PolicyClassification = Classification,
+                        DataStream = data
+                    };
+                    metadata.Id.Add(guid);
 
-                        if (Verbose)
+                    ion.PutManifestResult putManifestResult =
+                        await GetIonburst().PutAsync(putManifestRequest) as ion.PutManifestResult;
+
+                    ids.Add(guid, putManifestResult.StatusCode);
+                }
+                else
+                {
+                    if (Verbose) Console.WriteLine("Native processing...");
+
+                    // Begin Spliting of large data
+                    long size = data.Length;
+                    long offset = MaxSize;
+                    var bursts = new List<Burst>();
+
+                    long chunks = (size / offset) + (size % offset > 0 ? 1 : 0);
+                    metadata.ChunkCount = chunks;
+                    metadata.MaxSize = MaxSize;
+                    metadata.Size = size;
+
+                    if (Verbose)
+                    {
+                        Console.WriteLine("File: {0} is {1} bytes", source.FullName, size);
+                        Console.WriteLine("SHA256: '{0}'", metadata.Hash);
+                        Console.WriteLine("Splitting into {0} chunks: {1}", chunks, offset);
+                    }
+
+                    using (BinaryReader binaryReader = new(data))
+                    {
+                        int i = 0;
+                        for (long l = 0; l < size; l += offset)
                         {
-                            using (SHA256 sha = SHA256.Create())
+                            long boundary = l + offset;
+                            if (boundary > size)
+                                boundary = size;
+
+                            Guid guid = Guid.NewGuid();
+                            if (Verbose)
+                                Console.WriteLine("Chunk[{2}]:[{4}:{3}] {0} - {1}", l, boundary - 1, i++, boundary - l,
+                                    guid);
+
+                            Burst burst = new Burst {start = l, end = boundary, size = boundary - l, id = guid};
+
+                            var buffer = new byte[burst.size];
+                            binaryReader.BaseStream.Seek(burst.start, SeekOrigin.Begin);
+                            binaryReader.Read(buffer, 0, (int) burst.size);
+
+                            burst.data = buffer;
+
+                            bursts.Add(burst);
+                            metadata.Id.Add(guid);
+                        }
+                    }
+
+                    ParallelOptions parallelOptions = new() {MaxDegreeOfParallelism = 8};
+                    Parallel.ForEach(bursts, parallelOptions, (burst) =>
+                        {
+                            // Ionburst
+                            ion.PutObjectRequest putObjectRequest = new()
                             {
-                                byte[] hashBytes = sha.ComputeHash(burst.data);
-                                Console.WriteLine(
-                                    $"[{burst.id}:{burst.data.Length}] - {Convert.ToBase64String(hashBytes)}");
+                                PolicyClassification = Classification,
+                                Particle = burst.id.ToString()
+                            };
+
+                            if (Verbose)
+                            {
+                                using (SHA256 sha = SHA256.Create())
+                                {
+                                    byte[] hashBytes = sha.ComputeHash(burst.data);
+                                    Console.WriteLine(
+                                        $"[{burst.id}:{burst.data.Length}] - {Convert.ToBase64String(hashBytes)}");
+                                }
                             }
+
+                            putObjectRequest.DataStream = new MemoryStream(burst.data);
+
+                            ion.PutObjectResult putResult;
+                            if (mh.Usage == "Secrets")
+                            {
+                                var ion = GetIonburst();
+                                putResult = ion.SecretsPutAsync(putObjectRequest).Result;
+                            }
+                            else
+                            {
+                                putResult = GetIonburst().PutAsync(putObjectRequest).Result;
+                            }
+
+                            ids.Add(burst.id, putResult.StatusCode);
                         }
+                    );
+                }
 
-                        putObjectRequest.DataStream = new MemoryStream(burst.data);
-
-                        ion.PutObjectResult putResult;
-                        if (mh.Usage == "Secrets")
-                        {
-                            var ion = GetIonburst();
-                            putResult = ion.SecretsPutAsync(putObjectRequest).Result;
-                        }
-                        else
-                        {
-                            putResult = GetIonburst().PutAsync(putObjectRequest).Result;
-                        }
-
-                        ids.Add(burst.id, putResult.StatusCode);
-                    }
-                );
-
-                //if (ids.All(r => r.Value == 200))
                 await mh.PutMetadata(metadata, target);
 
                 data.Close();
@@ -456,7 +514,7 @@ namespace Ionburst.Apps.IonFS
                     dataStream = File.Create(to.FullName);
                 }
 
-                await LoadStreamFromIonburst(metadata, ids, dataStream, mh);
+                await LoadStreamFromIonburst(metadata, ids, dataStream, mh, to.IsText);
 
                 if (to.IsText)
                 {
@@ -473,7 +531,7 @@ namespace Ionburst.Apps.IonFS
                     throw new IonFSException("Please provide a key for decrypting the data (--key/--passphase)");
 
                 using MemoryStream ms = new MemoryStream();
-                await LoadStreamFromIonburst(metadata, ids, ms, mh);
+                await LoadStreamFromIonburst(metadata, ids, ms, mh, to.IsText);
 
                 using (Aes a = Aes.Create())
                 {
@@ -626,8 +684,8 @@ namespace Ionburst.Apps.IonFS
 
             ids.Add(guid, putManifestResult.StatusCode);
 
-            if (ids.All(r => r.Value == 200))
-                await mh.PutMetadata(metadata, target);
+            //if (ids.All(r => r.Value == 200))
+            await mh.PutMetadata(metadata, target);
 
             return ids;
         }
@@ -698,40 +756,59 @@ namespace Ionburst.Apps.IonFS
         }
 
         private async Task LoadStreamFromIonburst(IonFSMetadata metadata, Dictionary<Guid, int> ids, Stream stream,
-            IIonFSMetadata mh)
+            IIonFSMetadata mh, bool isText)
         {
-            foreach (Guid id in metadata.Id)
+            if (metadata.IsManifest && !isText)
             {
-                ion.GetObjectRequest getObjectRequest = new ion.GetObjectRequest
+                // Manifest chunking
+                ion.GetManifestRequest getManifestRequest = new()
                 {
-                    Particle = id.ToString()
+                    Particle = metadata.Id.First().ToString(),
                 };
 
-                ion.GetObjectResult getObjectResult;
+                ion.GetManifestResult getManifestResult =
+                    await GetIonburst().GetAsync(getManifestRequest) as ion.GetManifestResult;
+                getManifestResult.DataStream.Seek(0, SeekOrigin.Begin);
+                getManifestResult.DataStream.CopyTo(stream);
 
-                if (mh.Usage == "Secrets")
+                ids.Add(metadata.Id.First(), getManifestResult.StatusCode);
+            }
+            else
+            {
+                // Native chunking
+                foreach (Guid id in metadata.Id)
                 {
-                    getObjectResult = await GetIonburst().SecretsGetAsync(getObjectRequest);
-                }
-                else
-                {
-                    getObjectResult = await GetIonburst().GetAsync(getObjectRequest);
-                }
-
-                ids.Add(id, getObjectResult.StatusCode);
-
-                if (getObjectResult.StatusCode == 200)
-                {
-                    getObjectResult.DataStream.Seek(0, SeekOrigin.Begin);
-                    getObjectResult.DataStream.CopyTo(stream);
-                    if (Verbose)
+                    ion.GetObjectRequest getObjectRequest = new()
                     {
-                        using (SHA256 sha = SHA256.Create())
+                        Particle = id.ToString()
+                    };
+
+                    ion.GetObjectResult getObjectResult;
+
+                    if (mh.Usage == "Secrets")
+                    {
+                        getObjectResult = await GetIonburst().SecretsGetAsync(getObjectRequest);
+                    }
+                    else
+                    {
+                        getObjectResult = await GetIonburst().GetAsync(getObjectRequest);
+                    }
+
+                    ids.Add(id, getObjectResult.StatusCode);
+
+                    if (getObjectResult.StatusCode == 200)
+                    {
+                        getObjectResult.DataStream.Seek(0, SeekOrigin.Begin);
+                        getObjectResult.DataStream.CopyTo(stream);
+                        if (Verbose)
                         {
-                            getObjectResult.DataStream.Seek(0, SeekOrigin.Begin);
-                            byte[] hashBytes = sha.ComputeHash(getObjectResult.DataStream);
-                            Console.WriteLine(
-                                $"[{id}:{getObjectResult.DataStream.Length}] - {Convert.ToBase64String(hashBytes)}");
+                            using (SHA256 sha = SHA256.Create())
+                            {
+                                getObjectResult.DataStream.Seek(0, SeekOrigin.Begin);
+                                byte[] hashBytes = sha.ComputeHash(getObjectResult.DataStream);
+                                Console.WriteLine(
+                                    $"[{id}:{getObjectResult.DataStream.Length}] - {Convert.ToBase64String(hashBytes)}");
+                            }
                         }
                     }
                 }
