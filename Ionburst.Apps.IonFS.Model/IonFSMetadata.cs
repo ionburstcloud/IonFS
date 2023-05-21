@@ -34,6 +34,9 @@ namespace Ionburst.Apps.IonFS.Model
 
         [JsonProperty]
         public bool IsManifest { get; set; }
+        
+        [JsonProperty]
+        public List<IonFSTag> Tags { get; set; }
 
         public override string ToString()
         {

@@ -1,6 +1,7 @@
 ﻿// Copyright Ionburst Limited 2018-2021
 
 using System;
+using System.Collections.Generic;
 using Ionburst.Apps.IonFS.Exceptions;
 
 namespace Ionburst.Apps.IonFS.Model
@@ -20,6 +21,14 @@ namespace Ionburst.Apps.IonFS.Model
         public Boolean HasRepository { get; set; }
         public Boolean IsText { get; set; }
         public Boolean IsSecret { get; set; }
+        
+        // Search Tags
+        public List<IonFSTag> Tags { get; set; }
+
+        public IonFSObject()
+        {
+            Tags = new List<IonFSTag>();
+        }
 
         public string FullName
         {

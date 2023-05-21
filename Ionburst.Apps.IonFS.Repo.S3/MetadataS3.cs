@@ -94,7 +94,7 @@ namespace Ionburst.Apps.IonFS.Repo.S3
                 s3.ListObjectsV2Response response;
 
                 var t = s3.S3;
-                response = t.ListObjectsV2Async(request).Result;
+                response = await t.ListObjectsV2Async(request);
 
                 if (fso.IsRoot && fso.IsFolder)
                     exists = true;
@@ -264,8 +264,7 @@ namespace Ionburst.Apps.IonFS.Repo.S3
                     };
 
                     var t = s3.S3;
-                    s3.PutObjectResponse response = t.PutObjectAsync(s3PutRequest).Result;
-                    //s3.PutObjectResponse response = await s3.S3.PutObjectAsync(s3PutRequest);
+                    s3.PutObjectResponse response = await s3.S3.PutObjectAsync(s3PutRequest);
 
                     if (Verbose) Console.WriteLine(data);
                 }

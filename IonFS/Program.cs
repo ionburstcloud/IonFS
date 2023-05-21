@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Invocation;
 using System.CommandLine.NamingConventionBinder;
+using System.Diagnostics;
 using System.Linq;
 using Ionburst.Apps.IonFS;
 using Ionburst.Apps.IonFS.Model;
@@ -187,7 +188,10 @@ namespace IonFS
             var manifestOption = new Option<bool>(new[] {"--manifest", "-m"}, "Store large objects using SDK Manifest");
             var nativeOption = new Option<bool>(new[] {"--native"}, "Store large objects using native chunking");
 
+            var tagOption = new Option<string>(new[] { "--tags" }, "Search tags");
+            
             Command command = new Command("put", "upload a file, prefix remote paths with ion://");
+            #region Add commands
             command.Add(localFileArgument);
             command.Add(folderArgument);
             command.Add(nameOption);
@@ -198,6 +202,8 @@ namespace IonFS
             command.Add(blockSizeOption);
             command.Add(manifestOption);
             command.Add(nativeOption);
+            command.Add(tagOption);
+            #endregion
             //command.SetHandler(async (localfile, folder, name, classification, verbose, key, passphrase, blocksize) => 
             command.SetHandler(async (context) =>
             {
@@ -213,6 +219,7 @@ namespace IonFS
                     int blocksize = context.ParseResult.GetValueForOption(blockSizeOption);
                     bool manifest = context.ParseResult.GetValueForOption(manifestOption);
                     bool native = context.ParseResult.GetValueForOption(nativeOption);
+                    string tags = context.ParseResult.GetValueForOption(tagOption); // tag=value;tag=value;tag=value
 
                     if (string.IsNullOrEmpty(localfile))
                         throw new ArgumentNullException(nameof(localfile));
@@ -257,6 +264,7 @@ namespace IonFS
                         toName = name;
                     else
                         toName = fsoFrom.Name;
+                    
                     IonFSObject fsoNewTo = fs.FromRemoteFile(fsoTo.FullFSName + toName);
 
                     if (fsoFrom.IsFolder)
@@ -268,11 +276,38 @@ namespace IonFS
                     if (!string.IsNullOrEmpty(classification))
                         fs.Classification = classification;
 
+                    // Add any tags
+                    if (!string.IsNullOrEmpty(tags))
+                    {
+                        foreach (var rawtag in tags.Split(':'))
+                        {
+                            var tag = rawtag.Split("=");
+                            fsoNewTo.Tags.Add(new(tag[0], tag[1]));
+                        }
+                    }
+
+                    Stopwatch sw = new();
+                    if (verbose)
+                        sw.Start();
+
                     var results = await fs.PutAsync(fsoFrom, fsoNewTo);
 
                     if (!results.All(r => r.Value == 200))
                     {
                         Console.WriteLine($"Error sending data to Ionburst Cloud!");
+                        foreach (var r in results)
+                            Console.WriteLine($" {r.Key} {r.Value}");
+                    }
+                    
+                    if (verbose)
+                    {
+                        sw.Stop();
+                        Console.WriteLine($"Duration: {sw.ElapsedMilliseconds} ");
+                    }
+
+                    if (verbose && results.All(r => r.Value == 200))
+                    {
+                        Console.WriteLine($"Bursts:");
                         foreach (var r in results)
                             Console.WriteLine($" {r.Key} {r.Value}");
                     }
@@ -651,6 +686,10 @@ namespace IonFS
                     IonburstFS fs = new() {Verbose = verbose};
                     IonFSObject fso = fs.FromRemoteFile(path);
 
+                    Stopwatch sw = new();
+                    if (verbose)
+                        sw.Start();
+                    
                     if (fso.IsFolder)
                         await fs.DeleteDirAsync(fso, recursive);
                     else
@@ -662,6 +701,12 @@ namespace IonFS
                             foreach (var r in results)
                                 Console.WriteLine($" {r.Key} {r.Value}");
                         }
+                    }
+                    
+                    if (verbose)
+                    {
+                        sw.Stop();
+                        Console.WriteLine($"Duration: {sw.ElapsedMilliseconds} ");
                     }
                 }
                 catch (RemoteFSException e)
@@ -1185,6 +1230,49 @@ namespace IonFS
                     Console.WriteLine(e.Message);
                 }
             }, passphraseArgument);
+
+            return command;
+        }
+
+        private static Command Search()
+        {
+            //var fileArgument = new Argument<string>("file", "prefix remote paths with ion://") { Arity = ArgumentArity.ZeroOrOne };
+
+            var quietOption = new Option<bool>(new[] { "--quiet", "-q" });
+            var tagOption = new Option<bool>(new[] { "--tag" });
+            var valueOption = new Option<bool>(new[] { "--value" });
+
+            Command command = new("search") { IsHidden = true };
+            command.Add(quietOption);
+            command.Add(tagOption);
+            command.Add(valueOption);
+            command.SetHandler(async (quiet, tag, value) =>
+            {
+                try
+                {
+                    if (!quiet)
+                        Console.WriteLine(Logo());
+
+                    IonburstFS fs = new IonburstFS();
+
+                    // Get Search
+                    //IonFSSearchResults results = fs.GetMetadataSearchHandler();
+
+                    Console.WriteLine();
+                }
+                catch (RemoteFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                catch (IonFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                catch (ArgumentNullException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }, quietOption, tagOption, valueOption);
 
             return command;
         }

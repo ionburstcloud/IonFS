@@ -269,6 +269,7 @@ namespace Ionburst.Apps.IonFS
                             }
 
                             ids.Add(new KeyValuePair<Guid, int>(id, delResult.StatusCode));
+                            
                             if (Verbose)
                                 Console.WriteLine($"{id} {delResult.StatusCode} {delResult.StatusMessage}");
                         }
@@ -309,6 +310,7 @@ namespace Ionburst.Apps.IonFS
 
             IonFSMetadata metadata = new IonFSMetadata();
             metadata.Name = string.IsNullOrEmpty(target.Name) ? source.Name : target.Name;
+            metadata.Tags = target.Tags;
 
             Dictionary<Guid, int> ids = new Dictionary<Guid, int>();
 
