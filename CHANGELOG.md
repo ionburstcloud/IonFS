@@ -2,6 +2,29 @@
 
 <!--- next entry here -->
 
+## 0.4.0-develop.1
+2023-05-21
+
+### Features
+
+- add tags to PUTs (38aba8b9d640ab56517be8bad16c5a88cee65c6e)
+- first version of search command for LocalFS (b98e8204e17ee7f5c60d341bf6329465c25bb183)
+- add regex for searching (7231d67a41a132fb28299d20e18569f7bd883b61)
+- initial work to require per-repo Ionburst client (5fb67d438205c5b1b23e633344309decf5e047b6)
+- add check commands (602d6456176603ecb48a4e5d6ea84aa02db7e8e8)
+
+### Fixes
+
+- Native by Default, don't need an option (7e863250be85acb5923ac4f3085939cbb0086922)
+- ensure repo specific Ionburst client is used for operations (ee6fde66c958fea3ccdf49dfe4e413895078167e)
+- added details to repos command to show URI, Status, and Profile, add rm/mv/cp aliases (3fc99f184a131683397fd96e72da7a976e90e4b0)
+- set default config in S3 Wrapper to deal with a long delay on initialising S3, upgrade nuget packages (7de9b587b3dbc0daeee0bf4926d5ba27aabfb8cb)
+- add concurrent dictionaries (413a97e3ef642ecc9d19572683d5a2c924acac1f)
+- bug fix for del issue with async foreach, upgrade to net7.0, add check-id command (41e4da52829dfaa35ab9b5b47b721a08b7488173)
+- console message improvements for del and check (04d1a41ed1e760402205db2b5ea7289969e425bc)
+- clear up Put command verbose output (031b7f7c1d53e775541ed5b513d130087cc5c52b)
+- improve console verbose output for GETs (a684d26ea8488e1dd9e043c5f545255f9ecef4a6)
+
 ## 0.3.1
 2023-05-21
 
