@@ -7,7 +7,7 @@ namespace Ionburst.Apps.IonFS.Model
 {
     public interface IIonFSMetadata
     {
-        public bool Verbose { get;  set; }
+        public bool Verbose { get; set; }
         public string RepositoryName { get; set; }
         public string Usage { get; set; }
         public string GetDataStore();
@@ -21,6 +21,5 @@ namespace Ionburst.Apps.IonFS.Model
         public Task<IonFSMetadata> GetMetadata(IonFSObject file);
         public Task DelMetadata(IonFSObject fsObject);
         public Task<List<IonFSSearchResult>> Search(IonFSObject folder, string tag, string regex, bool recursive);
-
     }
 }

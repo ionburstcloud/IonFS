@@ -3,7 +3,6 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-
 using Ionburst.Apps.IonFS.Model;
 
 namespace Ionburst.Apps.IonFS

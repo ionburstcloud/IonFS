@@ -3,9 +3,7 @@
 using System;
 using System.IO;
 using static System.Environment;
-
 using Microsoft.Extensions.Configuration;
-
 using MongoDB.Driver;
 using MongoDB.Bson.Serialization;
 
@@ -26,7 +24,9 @@ namespace Ionburst.Apps.IonFS.Repo.Mongo
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
-                .AddJsonFile($"{GetFolderPath(SpecialFolder.UserProfile, SpecialFolderOption.None)}/.ionfs/appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile(
+                    $"{GetFolderPath(SpecialFolder.UserProfile, SpecialFolderOption.None)}/.ionfs/appsettings.json",
+                    optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables()
                 .Build();
 

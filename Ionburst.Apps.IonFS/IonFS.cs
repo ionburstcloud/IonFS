@@ -824,7 +824,8 @@ namespace Ionburst.Apps.IonFS
                             {
                                 getObjectResult.DataStream.Seek(0, SeekOrigin.Begin);
                                 byte[] hashBytes = sha.ComputeHash(getObjectResult.DataStream);
-                                Console.WriteLine($" [{id}:{getObjectResult.DataStream.Length}] - {Convert.ToBase64String(hashBytes)}");
+                                Console.WriteLine(
+                                    $" [{id}:{getObjectResult.DataStream.Length}] - {Convert.ToBase64String(hashBytes)}");
                             }
                         }
                     }
@@ -1155,7 +1156,8 @@ namespace Ionburst.Apps.IonFS
                             ids.TryAdd(id, checkResult.StatusCode);
 
                             if (Verbose)
-                                Console.WriteLine($"Verifying chunk {id}: {checkResult.StatusCode} {checkResult.StatusMessage}");
+                                Console.WriteLine(
+                                    $" Verifying chunk {id}: {checkResult.StatusCode} {checkResult.StatusMessage}");
                         }
                     );
                 }

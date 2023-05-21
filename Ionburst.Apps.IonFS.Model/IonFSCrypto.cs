@@ -9,7 +9,8 @@ namespace Ionburst.Apps.IonFS.Model
 {
     public class IonFSCrypto
     {
-        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1819:Properties should not return arrays", Justification = "<Pending>")]
+        [System.Diagnostics.CodeAnalysis.SuppressMessage("Performance", "CA1819:Properties should not return arrays",
+            Justification = "<Pending>")]
         public byte[] Key { get; set; }
 
         public string KeyToString()

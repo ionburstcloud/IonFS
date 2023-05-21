@@ -1,9 +1,7 @@
-﻿﻿using System;
+﻿using System;
 using Xunit;
 using Xunit.Abstractions;
-
 using Ionburst.Apps.IonFS.Model;
-
 using Ionburst.Apps.IonFS.Repo.S3;
 using Ionburst.Apps.IonFS.Repo.Mongo;
 using Ionburst.Apps.IonFS.Repo.LocalFS;
@@ -29,7 +27,8 @@ namespace Ionburst.Apps.IonFS.Tests
             IonFSObject folder = ionburstFS.FromRemoteFolder("ion://first-S3/atestfolder/");
             ionburstFS.MakeDirAsync(folder).Wait();
 
-            IIonFSMetadata metadata = new MetadataS3(ionburstFS.GetCurrentDataStore(), ionburstFS.GetCurrentRepositoryName(), "Data");
+            IIonFSMetadata metadata = new MetadataS3(ionburstFS.GetCurrentDataStore(),
+                ionburstFS.GetCurrentRepositoryName(), "Data");
             Assert.True(metadata.Exists(folder).Result);
 
             IonFSObject fsoPutFrom = IonFSObject.FromLocalFile("li.jpg");
@@ -87,7 +86,8 @@ namespace Ionburst.Apps.IonFS.Tests
             IonFSObject folder = ionburstFS.FromRemoteFolder("ion://iain-mongo/atestfolder/");
             ionburstFS.MakeDirAsync(folder).Wait();
 
-            IIonFSMetadata metadata = new MetadataMongoDB(ionburstFS.GetCurrentDataStore(), ionburstFS.GetCurrentRepositoryName(), "Data");
+            IIonFSMetadata metadata = new MetadataMongoDB(ionburstFS.GetCurrentDataStore(),
+                ionburstFS.GetCurrentRepositoryName(), "Data");
             Assert.True(metadata.Exists(folder).Result);
 
             IonFSObject fsoPutFrom = IonFSObject.FromLocalFile("li.jpg");
@@ -110,6 +110,7 @@ namespace Ionburst.Apps.IonFS.Tests
             ionburstFS.DeleteDirAsync(folder).Wait();
             Assert.False(metadata.Exists(folder).Result);
         }
+
         [Fact]
         public void PutGetDelTest_LocalFS()
         {
@@ -120,7 +121,8 @@ namespace Ionburst.Apps.IonFS.Tests
             IonFSObject folder = ionburstFS.FromRemoteFolder("ion://local/atestfolder/");
             ionburstFS.MakeDirAsync(folder).Wait();
 
-            IIonFSMetadata metadata = new MetadataLocalFS(ionburstFS.GetCurrentDataStore(), ionburstFS.GetCurrentRepositoryName(), "Data");
+            IIonFSMetadata metadata = new MetadataLocalFS(ionburstFS.GetCurrentDataStore(),
+                ionburstFS.GetCurrentRepositoryName(), "Data");
             Assert.True(metadata.Exists(folder).Result);
 
             IonFSObject fsoPutFrom = IonFSObject.FromLocalFile("li.jpg");
