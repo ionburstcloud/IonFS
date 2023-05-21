@@ -187,7 +187,7 @@ namespace IonFS
             var passPhraseOption = new Option<string>(new[] {"--passphrase", "-pp"}, "Passphrase to generate key");
             var blockSizeOption = new Option<int>(new[] {"--blocksize", "-bs"}, "Block size in bytes");
             var manifestOption = new Option<bool>(new[] {"--manifest", "-m"}, "Store large objects using SDK Manifest");
-            var nativeOption = new Option<bool>(new[] {"--native"}, "Store large objects using native chunking");
+            //var nativeOption = new Option<bool>(new[] {"--native"}, "Store large objects using native chunking");
 
             var tagOption = new Option<string>(new[] { "--tags" }, "Search tags in the format tag=value[:tag=value]...");
             
@@ -202,7 +202,7 @@ namespace IonFS
                 passPhraseOption,
                 blockSizeOption,
                 manifestOption,
-                nativeOption,
+                //nativeOption,
                 tagOption
             };
             //command.SetHandler(async (localfile, folder, name, classification, verbose, key, passphrase, blocksize) => 
@@ -219,7 +219,7 @@ namespace IonFS
                     string passphrase = context.ParseResult.GetValueForOption(passPhraseOption);
                     int blocksize = context.ParseResult.GetValueForOption(blockSizeOption);
                     bool manifest = context.ParseResult.GetValueForOption(manifestOption);
-                    bool native = context.ParseResult.GetValueForOption(nativeOption);
+                    //bool native = context.ParseResult.GetValueForOption(nativeOption);
                     string tags = context.ParseResult.GetValueForOption(tagOption); // tag=value:tag=value:tag=value
 
                     if (string.IsNullOrEmpty(localfile))
@@ -227,19 +227,19 @@ namespace IonFS
                     if (string.IsNullOrEmpty(folder))
                         throw new ArgumentNullException(nameof(folder));
 
-                    IonburstFS fs = new();
-                    if (manifest)
-                        fs.UseManifest = true;
-
-                    if (native)
-                        fs.UseManifest = false;
-
-                    fs.Verbose = verbose;
+                    IonburstFS fs = new()
+                    {
+                        UseManifest = manifest,
+                        Verbose = verbose
+                    };
+                    
+                    // Overrides the default value set in the config
                     if (blocksize > 0)
                     {
                         fs.MaxSize = blocksize;
                     }
 
+                    // Client-side encryption
                     if (!string.IsNullOrEmpty(key))
                     {
                         IonFSCrypto crypto = new();
@@ -260,6 +260,7 @@ namespace IonFS
 
                     IonFSObject fsoFrom = IonFSObject.FromLocalFile(localfile);
                     IonFSObject fsoTo = fs.FromRemoteFolder(folder);
+                    
                     string toName = "";
                     if (!string.IsNullOrEmpty(name))
                         toName = name;
@@ -893,15 +894,15 @@ namespace IonFS
             var verboseOption = new Option<bool>(new[] {"--verbose", "-v"});
             var keyOption = new Option<string>(new[] {"--key", "-k"}, "path to symmetric key");
             var passphraseOption = new Option<string>(new[] {"--passphrase", "-pp"}, "passphrase to generate key");
-
-            Command command = new Command("copy",
-                "copy a file to/from a remote file system, prefix remote paths with ion://");
-            command.Add(fromArgument);
-            command.Add(toArgument);
-            //command.AddOption(new Option<string>(new[] { "--name", "-n" }, "new filename"));
-            command.Add(verboseOption);
-            command.Add(keyOption);
-            command.Add(passphraseOption);
+            
+            Command command = new("copy", "copy a file to/from a remote file system, prefix remote paths with ion://")
+            {
+                fromArgument,
+                toArgument,
+                verboseOption,
+                keyOption,
+                passphraseOption
+            };
             command.SetHandler(async (from, to, verbose, key, passphrase) =>
             {
                 try
@@ -911,11 +912,11 @@ namespace IonFS
                     if (string.IsNullOrEmpty(to))
                         throw new ArgumentNullException(nameof(to));
 
-                    IonburstFS fs = new IonburstFS {Verbose = verbose};
+                    IonburstFS fs = new() {Verbose = verbose};
 
                     if (!string.IsNullOrEmpty(key))
                     {
-                        IonFSCrypto crypto = new IonFSCrypto();
+                        IonFSCrypto crypto = new();
                         crypto.KeyFromFile(key);
 
                         fs.Encrypt = true;
@@ -924,7 +925,7 @@ namespace IonFS
                     }
                     else if (!string.IsNullOrEmpty(passphrase))
                     {
-                        IonFSCrypto crypto = new IonFSCrypto();
+                        IonFSCrypto crypto = new();
                         crypto.KeyFromPassphrase(passphrase);
 
                         fs.Encrypt = true;
@@ -1269,7 +1270,7 @@ namespace IonFS
                     value ??= ".*";
                     tag ??= ".*";
 
-                    IonburstFS fs = new IonburstFS();
+                    IonburstFS fs = new();
 
                     // Get Search
                     IonFSObject o = fs.FromRemoteFolder(repo); // Path
