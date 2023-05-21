@@ -19,7 +19,6 @@ namespace Ionburst.Apps.IonFS
 {
     public class IonburstFS : IDisposable
     {
-        private IIonburstClient ionburstPrivate;
         private readonly IIonFSMetadata md;
         private readonly IonFSRepository defaultRepo;
         private readonly IConfiguration config;

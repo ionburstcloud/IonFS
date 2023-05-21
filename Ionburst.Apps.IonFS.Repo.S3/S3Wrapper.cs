@@ -3,11 +3,10 @@
 using System;
 using System.IO;
 using static System.Environment;
-
 using Microsoft.Extensions.Configuration;
-
 using Amazon.Extensions.NETCore.Setup;
 using Amazon.S3;
+using Amazon.Runtime;
 
 namespace Ionburst.Apps.IonFS.Repo.S3
 {
@@ -25,11 +24,14 @@ namespace Ionburst.Apps.IonFS.Repo.S3
                 .SetBasePath(Directory.GetCurrentDirectory())
                 .AddJsonFile("appsettings.json", optional: true, reloadOnChange: true)
                 .AddJsonFile($"appsettings.{environmentName}.json", optional: true)
-                .AddJsonFile($"{GetFolderPath(SpecialFolder.UserProfile, SpecialFolderOption.None)}/.ionfs/appsettings.json", optional: true, reloadOnChange: true)
+                .AddJsonFile(
+                    $"{GetFolderPath(SpecialFolder.UserProfile, SpecialFolderOption.None)}/.ionfs/appsettings.json",
+                    optional: true, reloadOnChange: true)
                 .AddEnvironmentVariables()
                 .Build();
 
             AWSOptions awsOptions = configuration.GetAWSOptions();
+            awsOptions.DefaultConfigurationMode = DefaultConfigurationMode.Standard;
             S3 = awsOptions.CreateServiceClient<IAmazonS3>();
 
             _bucket = configuration["S3_BUCKET_NAME"];
@@ -46,4 +48,3 @@ namespace Ionburst.Apps.IonFS.Repo.S3
         }
     }
 }
-

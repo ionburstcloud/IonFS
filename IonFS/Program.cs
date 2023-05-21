@@ -73,9 +73,9 @@ namespace IonFS
 
                             foreach (var item in files)
                             {
-                                Console.WriteLine("{0} {1} {2}",
+                                Console.WriteLine("{0} {1} {2} {3}",
                                     item.IsFolder ? "d" : " ", item.FullName.PadRight(maxLen + 2, ' '),
-                                    !item.IsFolder ? item.LastModified.ToString() : "");
+                                    !item.IsFolder ? item.LastModified.ToString() : "", string.Join(",", item.Tags));
                             }
                         }
                     }
