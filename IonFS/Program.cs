@@ -332,18 +332,20 @@ namespace IonFS
                         Console.WriteLine($"{fsoFrom} has been uploaded and verified.");
                     }
 
-                    if (verbose)
-                    {
-                        sw.Stop();
-                        Console.WriteLine($"Duration: {sw.ElapsedMilliseconds} ");
-                    }
-
                     if (verbose && results.All(r => r.Value == 200))
                     {
                         Console.WriteLine($"Bursts Status:");
                         foreach (var r in results)
                             Console.WriteLine($" {r.Key} {r.Value}");
                     }
+                    
+                    if (verbose)
+                    {
+                        sw.Stop();
+                        Console.WriteLine();
+                        Console.WriteLine($"Duration: {sw.ElapsedMilliseconds} ");
+                    }
+                    
                 }
                 catch (RemoteFSException e)
                 {
