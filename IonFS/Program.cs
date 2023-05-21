@@ -199,7 +199,7 @@ namespace IonFS
             var blockSizeOption = new Option<int>(new[] { "--blocksize", "-bs" }, "Block size in bytes");
             var manifestOption =
                 new Option<bool>(new[] { "--manifest", "-m" }, "Store large objects using SDK Manifest");
-            //var nativeOption = new Option<bool>(new[] {"--native"}, "Store large objects using native chunking");
+            var nativeOption = new Option<bool>(new[] {"--native"}, "Store large objects using native chunking");
 
             var tagOption =
                 new Option<string>(new[] { "--tags" }, "Search tags in the format tag=value[:tag=value]...");
@@ -215,7 +215,7 @@ namespace IonFS
                 passPhraseOption,
                 blockSizeOption,
                 manifestOption,
-                //nativeOption,
+                nativeOption,
                 tagOption
             };
             //command.SetHandler(async (localfile, folder, name, classification, verbose, key, passphrase, blocksize) => 
@@ -232,7 +232,7 @@ namespace IonFS
                     string passphrase = context.ParseResult.GetValueForOption(passPhraseOption);
                     int blocksize = context.ParseResult.GetValueForOption(blockSizeOption);
                     bool manifest = context.ParseResult.GetValueForOption(manifestOption);
-                    //bool native = context.ParseResult.GetValueForOption(nativeOption);
+                    bool native = context.ParseResult.GetValueForOption(nativeOption);
                     string tags = context.ParseResult.GetValueForOption(tagOption); // tag=value:tag=value:tag=value
 
                     if (string.IsNullOrEmpty(localfile))
@@ -1033,8 +1033,8 @@ namespace IonFS
             var guidArgument = new Argument<string>("guid") { Arity = ArgumentArity.ExactlyOne };
 
             Command command = new("rm-id") { IsHidden = true };
-            command.Add(guidArgument);
             command.Add(repoArgument);
+            command.Add(guidArgument);
             command.SetHandler(async (repo, guid) =>
             {
                 if (guid == null)

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
@@ -217,12 +218,12 @@ namespace Ionburst.Apps.IonFS
                 throw new IonFSException($"Folder '{folder}' must be empty, or use the --recursive option");
         }
 
-        public async Task<HashSet<KeyValuePair<Guid, int>>> DelAsync(IonFSObject file)
+        public async Task<ConcurrentDictionary<Guid, int>> DelAsync(IonFSObject file)
         {
             if (file == null)
                 throw new ArgumentNullException(nameof(file));
 
-            HashSet<KeyValuePair<Guid, int>> ids = new();
+            ConcurrentDictionary<Guid, int> ids = new();
 
             try
             {
@@ -243,7 +244,7 @@ namespace Ionburst.Apps.IonFS
                         await GetIonburst(mh.RepositoryName)
                             .DeleteAsync(delManifestRequest) as ion.DeleteManifestResult;
 
-                    ids.Add(new KeyValuePair<Guid, int>(metadata.Id.First(), delManifestResult.StatusCode));
+                    ids.TryAdd(metadata.Id.First(), delManifestResult.StatusCode);
                     if (Verbose)
                         Console.WriteLine(
                             $"{metadata.Id.First()} {delManifestResult.StatusCode} {delManifestResult.StatusMessage}");
@@ -270,7 +271,7 @@ namespace Ionburst.Apps.IonFS
                                 delResult = await GetIonburst(mh.RepositoryName).DeleteAsync(delRequest);
                             }
 
-                            ids.Add(new KeyValuePair<Guid, int>(id, delResult.StatusCode));
+                            ids.TryAdd(id, delResult.StatusCode);
 
                             if (Verbose)
                                 Console.WriteLine($"{id} {delResult.StatusCode} {delResult.StatusMessage}");
@@ -300,7 +301,7 @@ namespace Ionburst.Apps.IonFS
             await mh.MakeDir(folder);
         }
 
-        public async Task<Dictionary<Guid, int>> PutAsync(IonFSObject source, IonFSObject target)
+        public async Task<ConcurrentDictionary<Guid, int>> PutAsync(IonFSObject source, IonFSObject target)
         {
             if (source == null)
                 throw new ArgumentNullException(nameof(source), "source object cannot be null");
@@ -314,7 +315,7 @@ namespace Ionburst.Apps.IonFS
             metadata.Name = string.IsNullOrEmpty(target.Name) ? source.Name : target.Name;
             metadata.Tags = target.Tags;
 
-            Dictionary<Guid, int> ids = new Dictionary<Guid, int>();
+            ConcurrentDictionary<Guid, int> ids = new();
 
             IIonFSMetadata mh = GetMetadataHandler(target);
             bool exists = await mh.Exists(target);
@@ -390,13 +391,21 @@ namespace Ionburst.Apps.IonFS
                     ion.PutManifestResult putManifestResult =
                         await GetIonburst(mh.RepositoryName).PutAsync(putManifestRequest) as ion.PutManifestResult;
 
-                    ids.Add(guid, putManifestResult.StatusCode);
+                    if (putManifestResult != null)
+                        Console.WriteLine(
+                            $"{putManifestRequest.Particle} {putManifestResult.StatusCode} {putManifestResult.ActivityToken}");
+
+                    if (putManifestResult != null && putManifestResult.StatusCode == 200)
+                    {
+                        metadata.Id.Add(guid);
+                        ids.TryAdd(guid, putManifestResult.StatusCode);
+                    }
                 }
                 else
                 {
                     if (Verbose) Console.WriteLine("Native processing...");
 
-                    // Begin Spliting of large data
+                    // Begin Splitting of large data
                     long size = data.Length;
                     long offset = MaxSize;
                     var bursts = new List<Burst>();
@@ -473,7 +482,7 @@ namespace Ionburst.Apps.IonFS
                                 putResult = GetIonburst(mh.RepositoryName).PutAsync(putObjectRequest).Result;
                             }
 
-                            ids.Add(burst.id, putResult.StatusCode);
+                            ids.TryAdd(burst.id, putResult.StatusCode);
                         }
                     );
                 }
