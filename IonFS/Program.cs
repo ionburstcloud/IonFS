@@ -189,22 +189,22 @@ namespace IonFS
             var manifestOption = new Option<bool>(new[] {"--manifest", "-m"}, "Store large objects using SDK Manifest");
             var nativeOption = new Option<bool>(new[] {"--native"}, "Store large objects using native chunking");
 
-            var tagOption = new Option<string>(new[] { "--tags" }, "Search tags");
+            var tagOption = new Option<string>(new[] { "--tags" }, "Search tags in the format tag=value[:tag=value]...");
             
-            Command command = new Command("put", "upload a file, prefix remote paths with ion://");
-            #region Add commands
-            command.Add(localFileArgument);
-            command.Add(folderArgument);
-            command.Add(nameOption);
-            command.Add(classificationOption);
-            command.Add(verboseOption);
-            command.Add(keyOption);
-            command.Add(passPhraseOption);
-            command.Add(blockSizeOption);
-            command.Add(manifestOption);
-            command.Add(nativeOption);
-            command.Add(tagOption);
-            #endregion
+            Command command = new("put", "upload a file, prefix remote paths with ion://")
+            {
+                localFileArgument,
+                folderArgument,
+                nameOption,
+                classificationOption,
+                verboseOption,
+                keyOption,
+                passPhraseOption,
+                blockSizeOption,
+                manifestOption,
+                nativeOption,
+                tagOption
+            };
             //command.SetHandler(async (localfile, folder, name, classification, verbose, key, passphrase, blocksize) => 
             command.SetHandler(async (context) =>
             {
@@ -220,7 +220,7 @@ namespace IonFS
                     int blocksize = context.ParseResult.GetValueForOption(blockSizeOption);
                     bool manifest = context.ParseResult.GetValueForOption(manifestOption);
                     bool native = context.ParseResult.GetValueForOption(nativeOption);
-                    string tags = context.ParseResult.GetValueForOption(tagOption); // tag=value;tag=value;tag=value
+                    string tags = context.ParseResult.GetValueForOption(tagOption); // tag=value:tag=value:tag=value
 
                     if (string.IsNullOrEmpty(localfile))
                         throw new ArgumentNullException(nameof(localfile));
@@ -345,13 +345,15 @@ namespace IonFS
             var keyOption = new Option<string>(new[] {"--key", "-k"}, "path to symmetric key");
             var passphraseOption = new Option<string>(new[] {"--passphrase", "-pp"}, "passphrase to generate key");
 
-            Command command = new Command("mget", "download a file using a Manifest, prefix remote paths with ion://");
-            command.Add(fromArgument);
-            command.Add(toArgument);
-            command.Add(nameOption);
-            command.Add(verboseOption);
-            command.Add(keyOption);
-            command.Add(passphraseOption);
+            Command command = new("mget", "download a file using a Manifest, prefix remote paths with ion://")
+            {
+                fromArgument,
+                toArgument,
+                nameOption,
+                verboseOption,
+                keyOption,
+                passphraseOption
+            };
             command.SetHandler(async (from, to, name, verbose, key, passphrase) =>
             {
                 try
@@ -422,15 +424,17 @@ namespace IonFS
             var passPhraseOption = new Option<string>(new[] {"--passphrase", "-pp"}, "Passphrase to generate key");
             var blockSizeOption = new Option<int>(new[] {"--blocksize", "-bs"}, "Block size in bytes");
 
-            Command command = new Command("mput", "upload a file using a Manifest, prefix remote paths with ion://");
-            command.Add(localFileArgument);
-            command.Add(folderArgument);
-            command.Add(nameOption);
-            command.Add(classificationOption);
-            command.Add(verboseOption);
-            command.Add(keyOption);
-            command.Add(passPhraseOption);
-            command.Add(blockSizeOption);
+            Command command = new("mput", "upload a file using a Manifest, prefix remote paths with ion://")
+            {
+                localFileArgument,
+                folderArgument,
+                nameOption,
+                classificationOption,
+                verboseOption,
+                keyOption,
+                passPhraseOption,
+                blockSizeOption
+            };
             command.SetHandler(async (localfile, folder, name, classification, verbose, key, passphrase, blocksize) =>
                 {
                     try
@@ -525,14 +529,16 @@ namespace IonFS
             var keyOption = new Option<string>(new[] {"--key", "-k"}, "path to symmetric key");
             var passphraseOption = new Option<string>(new[] {"--passphrase", "-pp"}, "passphrase to generate key");
 
-            Command command = new Command("put", "store secret, prefix remote paths with ion://");
-            command.Add(dataArgument);
-            command.Add(vaultArgument);
-            command.Add(nameArgument);
-            command.Add(classificationOption);
-            command.Add(verboseOption);
-            command.Add(keyOption);
-            command.Add(passphraseOption);
+            Command command = new ("put", "store secret, prefix remote paths with ion://")
+            {
+                dataArgument,
+                vaultArgument,
+                nameArgument,
+                classificationOption,
+                verboseOption,
+                keyOption,
+                passphraseOption
+            };
             command.SetHandler(async (data, vault, name, classification, verbose, key, passphrase) =>
                 {
                     IonburstFS fs = new IonburstFS();
@@ -1245,12 +1251,14 @@ namespace IonFS
             var valueOption = new Option<string>(new[] { "--value" }) { };
             var recursiveOption = new Option<bool>(new[] { "--recursive", "-r" });
 
-            Command command = new("search");
-            command.Add(repoArgument);
-            command.Add(quietOption);
-            command.Add(tagOption);
-            command.Add(valueOption);
-            command.Add(recursiveOption);
+            Command command = new("search")
+            {
+                repoArgument,
+                quietOption,
+                tagOption,
+                valueOption,
+                recursiveOption
+            };
             command.SetHandler(async (repo,quiet, tag, value, recursive) =>
             {
                 try

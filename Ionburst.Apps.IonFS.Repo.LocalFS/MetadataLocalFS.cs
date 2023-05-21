@@ -213,8 +213,8 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
         {
             try
             {
-                Regex tagrx = new Regex(tag);
-                Regex valrx = new Regex(value);
+                Regex tagrx = new(tag);
+                Regex valrx = new(value);
 
                 //System.IO.DirectoryInfo dir = new System.IO.DirectoryInfo(_dataStoreFolder.FullName);
                 //IEnumerable<FileInfo> fileList = dir.GetFiles("*.*", System.IO.SearchOption.AllDirectories);
@@ -230,7 +230,7 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
                                 FileData = new FileInfo(file.Replace('/', Path.DirectorySeparatorChar))
                             };
 
-                List<IonFSSearchResult> results = new List<IonFSSearchResult>();
+                List<IonFSSearchResult> results = new();
                 foreach (var f in files)
                 {
                     IonFSMetadata data;
