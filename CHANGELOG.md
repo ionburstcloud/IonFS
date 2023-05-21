@@ -2,6 +2,13 @@
 
 <!--- next entry here -->
 
+## 0.3.1
+2023-05-21
+
+### Fixes
+
+- further manifest optimisations (7262e613ef958a9d21e2361011d9044e18617928)
+
 ## 0.3.1-develop.1
 2023-02-19
 
