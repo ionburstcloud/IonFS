@@ -1024,38 +1024,42 @@ namespace IonFS
 
         private static Command DeleteById()
         {
-            var guidArgument = new Argument<string>("guid") {Arity = ArgumentArity.ExactlyOne};
+            var repoArgument = new Argument<string>("repo") { Arity = ArgumentArity.ExactlyOne };
+            var guidArgument = new Argument<string>("guid") { Arity = ArgumentArity.ExactlyOne };
 
             Command command = new("rm-id") {IsHidden = true};
             command.Add(guidArgument);
-            command.SetHandler(async (guid) =>
+            command.Add(repoArgument);
+            command.SetHandler(async (repo, guid) =>
             {
                 if (guid == null)
                     throw new ArgumentNullException(nameof(guid));
 
                 IonburstFS fs = new IonburstFS();
-                await fs.RemoveById(Guid.Parse(guid));
-            }, guidArgument);
+                await fs.RemoveById(repo, Guid.Parse(guid));
+            }, repoArgument, guidArgument);
 
             return command;
         }
 
         private static Command GetChunkById()
         {
-            var guidArgument = new Argument<string>("guid") {Arity = ArgumentArity.ExactlyOne};
+            var repoArgument = new Argument<string>("repo") { Arity = ArgumentArity.ExactlyOne };
+            var guidArgument = new Argument<string>("guid") { Arity = ArgumentArity.ExactlyOne };
 
             var verboseOption = new Option<bool>(new[] {"--verbose", "-v"});
 
             Command command = new("get-id") {IsHidden = true};
             command.Add(guidArgument);
+            command.Add(repoArgument);
             command.Add(verboseOption);
-            command.SetHandler(async (guid, verbose) =>
+            command.SetHandler(async (repo, guid, verbose) =>
             {
                 if (guid == null)
                     throw new ArgumentNullException(nameof(guid));
 
                 IonburstFS fs = new() {Verbose = verbose};
-                var results = await fs.GetChunk(guid);
+                var results = await fs.GetChunk(repo, guid);
 
                 if (!results.All(r => r.Value == 200))
                 {
@@ -1063,7 +1067,7 @@ namespace IonFS
                     foreach (KeyValuePair<string, int> r in results)
                         Console.WriteLine($" {r.Key} {r.Value}");
                 }
-            }, guidArgument, verboseOption);
+            }, repoArgument, guidArgument, verboseOption);
 
             return command;
         }
@@ -1173,9 +1177,11 @@ namespace IonFS
 
         private static Command GetClassifications()
         {
-            Command command = new("policy", "list the current Ionburst Cloud Classification Policies")
-                {IsHidden = false};
-            command.SetHandler(async () =>
+            var repoArgument = new Argument<string>("repo") { Arity = ArgumentArity.ExactlyOne };
+
+            Command command = new("policy", "list the current Ionburst Cloud Classification Policies") {IsHidden = false};
+            command.Add(repoArgument);
+            command.SetHandler(async (repo) =>
             {
                 try
                 {
@@ -1183,7 +1189,7 @@ namespace IonFS
 
                     Console.WriteLine(Logo());
 
-                    var classifications = await fs.GetClassifications();
+                    var classifications = await fs.GetClassifications(repo);
 
                     Console.WriteLine("Available Classifications:\n");
                     foreach (var c in classifications.OrderBy(x => x.Key))
@@ -1195,7 +1201,7 @@ namespace IonFS
                 {
                     Console.WriteLine(e.Message);
                 }
-            });
+            }, repoArgument);
 
             return command;
         }
