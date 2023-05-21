@@ -297,5 +297,11 @@ namespace Ionburst.Apps.IonFS.Repo.S3
                 throw new IonFSException("S3 Exception", fSObject, e);
             }
         }
+        
+        public async Task<List<IonFSSearchResult>> Search(IonFSObject folder, string tag, string regex, bool recursive)
+        {
+            throw new NotImplementedException();
+        }
+
     }
 }

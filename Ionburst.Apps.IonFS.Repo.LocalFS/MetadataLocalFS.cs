@@ -8,6 +8,7 @@ using Ionburst.Apps.IonFS.Model;
 using Ionburst.Apps.IonFS.Exceptions;
 using Newtonsoft.Json;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Ionburst.Apps.IonFS.Repo.LocalFS
 {
@@ -207,5 +208,78 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
                 throw new IonFSException("LocalFS Exception", e);
             }
         }
+        
+        public async Task<List<IonFSSearchResult>> Search(IonFSObject folder, string tag, string value, bool recursive)
+        {
+            try
+            {
+                Regex tagrx = new Regex(tag);
+                Regex valrx = new Regex(value);
+
+                //System.IO.DirectoryInfo dir = new System.IO.DirectoryInfo(_dataStoreFolder.FullName);
+                //IEnumerable<FileInfo> fileList = dir.GetFiles("*.*", System.IO.SearchOption.AllDirectories);
+
+                SearchOption so = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+                var files = from file
+                                in Directory.EnumerateFileSystemEntries(
+                                    Path.Combine(_dataStoreFolder.FullName, folder.FullName),
+                                    "*", so
+                                    )
+                            select new
+                            {
+                                FileData = new FileInfo(file.Replace('/', Path.DirectorySeparatorChar))
+                            };
+
+                List<IonFSSearchResult> results = new List<IonFSSearchResult>();
+                foreach (var f in files)
+                {
+                    IonFSMetadata data;
+
+                    if (f.FileData.Attributes != FileAttributes.Directory)
+                    {
+                        string metadata = File.ReadAllText(f.FileData.FullName);
+                        data = JsonConvert.DeserializeObject<IonFSMetadata>(metadata);
+
+                        if (data.Tags != null)
+                        {
+                            foreach (var t in data.Tags)
+                            {
+                                if (tagrx.Match(t.Name).Success)
+                                {
+                                    Match m = valrx.Match(t.Value);
+
+                                    if (m.Success)
+                                    {
+                                        IonFSObject fso = IonFSObject.FromLocalFile(f.FileData.FullName.Replace(_dataStoreFolder.FullName + Path.DirectorySeparatorChar, ""));
+                                        fso.FS = "ion://";
+                                        fso.IsRemote = true;
+                                        fso.IsFolder = (f.FileData.Attributes == FileAttributes.Directory);
+                                        fso.IsFile = (f.FileData.Attributes == FileAttributes.Normal);
+                                        fso.LastModified = f.FileData.LastWriteTime;
+
+                                        results.Add(
+                                            new IonFSSearchResult()
+                                            {
+                                                Name = f.FileData.FullName.Replace(_dataStoreFolder.FullName + Path.DirectorySeparatorChar, ""),
+                                                Tag = t.Name,
+                                                Value = t.Value,
+                                                Object = fso
+                                            }
+                                        );
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+
+                return results;
+            }
+            catch (RegexParseException e)
+            {
+                throw e;
+            }
+        }
+
     }
 }

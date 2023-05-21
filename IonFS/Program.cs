@@ -12,6 +12,7 @@ using Ionburst.Apps.IonFS.Model;
 using Ionburst.Apps.IonFS.Exceptions;
 using Figgle;
 using System.Reflection;
+using System.Text.RegularExpressions;
 using System.CommandLine.NamingConventionBinder;
 
 namespace IonFS
@@ -1237,28 +1238,45 @@ namespace IonFS
         private static Command Search()
         {
             //var fileArgument = new Argument<string>("file", "prefix remote paths with ion://") { Arity = ArgumentArity.ZeroOrOne };
+            var repoArgument = new Argument<string>("repo", "prefix with ion://") { Arity = ArgumentArity.ExactlyOne };
 
             var quietOption = new Option<bool>(new[] { "--quiet", "-q" });
-            var tagOption = new Option<bool>(new[] { "--tag" });
-            var valueOption = new Option<bool>(new[] { "--value" });
+            var tagOption = new Option<string>(new[] { "--tag" });
+            var valueOption = new Option<string>(new[] { "--value" }) { };
+            var recursiveOption = new Option<bool>(new[] { "--recursive", "-r" });
 
-            Command command = new("search") { IsHidden = true };
+            Command command = new("search");
+            command.Add(repoArgument);
             command.Add(quietOption);
             command.Add(tagOption);
             command.Add(valueOption);
-            command.SetHandler(async (quiet, tag, value) =>
+            command.Add(recursiveOption);
+            command.SetHandler(async (repo,quiet, tag, value, recursive) =>
             {
                 try
                 {
                     if (!quiet)
                         Console.WriteLine(Logo());
+                    
+                    value ??= ".*";
+                    tag ??= ".*";
 
                     IonburstFS fs = new IonburstFS();
 
                     // Get Search
-                    //IonFSSearchResults results = fs.GetMetadataSearchHandler();
+                    IonFSObject o = fs.FromRemoteFolder(repo); // Path
+                    IIonFSMetadata m = fs.GetMetadataHandler(o);
+                    List<IonFSSearchResult> results = await m.Search(o, tag, value, recursive);
 
-                    Console.WriteLine();
+                    Console.WriteLine($"Search Results ({o.FullFSName}):\n");
+                    if (results.Count > 0)
+                    {
+                        foreach (var r in results)
+                            Console.WriteLine($" {r.Name}: {r.Tag}={r.Value}");
+                    }
+                    else
+                        Console.WriteLine(" No matches found");
+                    
                 }
                 catch (RemoteFSException e)
                 {
@@ -1272,7 +1290,12 @@ namespace IonFS
                 {
                     Console.WriteLine(e.Message);
                 }
-            }, quietOption, tagOption, valueOption);
+                catch (RegexParseException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+
+            }, repoArgument, quietOption, tagOption, valueOption, recursiveOption);
 
             return command;
         }
@@ -1351,7 +1374,7 @@ namespace IonFS
                 command.AddCommand(GetClassifications());
                 command.AddCommand(GetRepos());
                 command.AddCommand(KeyGen());
-
+                command.AddCommand(Search());
                 #endregion
 
                 Command secrets = Secrets();

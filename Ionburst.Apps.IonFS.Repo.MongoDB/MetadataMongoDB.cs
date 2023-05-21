@@ -279,5 +279,11 @@ namespace Ionburst.Apps.IonFS.Repo.Mongo
                 Console.WriteLine($"MetadataMongoDB.DelMetadata exception:  {e}");
             }
         }
+        
+        public async Task<List<IonFSSearchResult>> Search(IonFSObject folder, string tag, string regex, bool recursive)
+        {
+            throw new NotImplementedException();
+        }
+
     }
 }

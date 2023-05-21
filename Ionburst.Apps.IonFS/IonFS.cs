@@ -187,8 +187,7 @@ namespace Ionburst.Apps.IonFS
                 fso.Repository = m.RepositoryName;
                 fso.HasRepository = true;
             }
-
-
+            
             return m;
         }
 
