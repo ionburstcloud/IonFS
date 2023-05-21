@@ -514,7 +514,7 @@ namespace Ionburst.Apps.IonFS
             if (metadata.Id.Count == 0)
                 throw new IonFSException("No Objects found in metadata");
 
-            Dictionary<Guid, int> ids = new Dictionary<Guid, int>();
+            Dictionary<Guid, int> ids = new();
 
             if (string.IsNullOrEmpty(metadata.IV))
             {
@@ -575,7 +575,7 @@ namespace Ionburst.Apps.IonFS
 
             if (ids.All(id => id.Value == 200) && !to.IsText)
             {
-                using (MemoryStream data = new MemoryStream(File.ReadAllBytes(to.FullName)))
+                using (MemoryStream data = new(File.ReadAllBytes(to.FullName)))
                 {
                     using (SHA256 sha = SHA256.Create())
                     {
@@ -583,6 +583,7 @@ namespace Ionburst.Apps.IonFS
                         string hash = Convert.ToBase64String(hashBytes);
                         if (Verbose)
                         {
+                            Console.WriteLine();
                             Console.WriteLine($"File: {to.FullName}");
                             Console.WriteLine($"File size: {data.Length}");
                             Console.WriteLine($"SHA256: '{hash}'");
@@ -818,12 +819,12 @@ namespace Ionburst.Apps.IonFS
                         getObjectResult.DataStream.CopyTo(stream);
                         if (Verbose)
                         {
+                            Console.WriteLine("GET chunks:");
                             using (SHA256 sha = SHA256.Create())
                             {
                                 getObjectResult.DataStream.Seek(0, SeekOrigin.Begin);
                                 byte[] hashBytes = sha.ComputeHash(getObjectResult.DataStream);
-                                Console.WriteLine(
-                                    $"[{id}:{getObjectResult.DataStream.Length}] - {Convert.ToBase64String(hashBytes)}");
+                                Console.WriteLine($" [{id}:{getObjectResult.DataStream.Length}] - {Convert.ToBase64String(hashBytes)}");
                             }
                         }
                     }

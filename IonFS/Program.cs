@@ -154,6 +154,10 @@ namespace IonFS
                     IonFSObject fromFso = fs.FromRemoteFile(from);
                     IonFSObject toFso = IonFSObject.FromLocalFile((to is null) ? fromFso.Name : to);
 
+                    Stopwatch sw = new();
+                    if (verbose)
+                        sw.Start();
+
                     var results = await fs.GetAsync(fromFso, toFso);
                     if (!results.All(r => r.Value == 200))
                     {
@@ -162,7 +166,15 @@ namespace IonFS
                             Console.WriteLine($" {r.Key} {r.Value}");
                     }
                     else
-                        Console.WriteLine($"{fromFso.Name} has been downloaded.");
+                        Console.WriteLine("{0} {1}has been downloaded.", fromFso.Name,
+                            (fromFso.Name != toFso.Name) ? "(as " + toFso.Name + ") " : "");
+
+                    if (verbose)
+                    {
+                        sw.Stop();
+                        Console.WriteLine();
+                        Console.WriteLine($"Duration: {sw.ElapsedMilliseconds}ms");
+                    }
                 }
                 catch (RemoteFSException e)
                 {
@@ -338,14 +350,13 @@ namespace IonFS
                         foreach (var r in results)
                             Console.WriteLine($" {r.Key} {r.Value}");
                     }
-                    
+
                     if (verbose)
                     {
                         sw.Stop();
                         Console.WriteLine();
-                        Console.WriteLine($"Duration: {sw.ElapsedMilliseconds} ");
+                        Console.WriteLine($"Duration: {sw.ElapsedMilliseconds}ms");
                     }
-                    
                 }
                 catch (RemoteFSException e)
                 {
@@ -419,6 +430,7 @@ namespace IonFS
                     if (verbose)
                     {
                         sw.Stop();
+                        Console.WriteLine();
                         Console.WriteLine($"Duration: {sw.ElapsedMilliseconds}ms");
                     }
                 }
@@ -825,6 +837,7 @@ namespace IonFS
                     if (verbose)
                     {
                         sw.Stop();
+                        Console.WriteLine();
                         Console.WriteLine($"Duration: {sw.ElapsedMilliseconds}ms");
                     }
                 }
