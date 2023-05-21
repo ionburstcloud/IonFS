@@ -94,7 +94,8 @@ namespace Ionburst.Apps.IonFS
                 {
                     Repository = configuredRepository.Name,
                     Usage = configuredRepository.Usage,
-                    DataStore = configuredRepository.DataStore
+                    DataStore = configuredRepository.DataStore,
+                    IonburstConfig = configuredRepository.Ionburst
                 };
 
                 //Type t = Type.GetType(configuredRepository.Class, Assembly.LoadFrom(configuredRepository.Assembly), );
@@ -161,13 +162,7 @@ namespace Ionburst.Apps.IonFS
 
         protected IIonburstClient GetIonburst()
         {
-            if (ionburstPrivate is null)
-                ionburstPrivate = IonburstClientFactory.CreateIonburstClient(ionFSConfig);
-
-            if (!ionburstPrivate.CheckIonburstAPI().Result)
-                throw new IonFSException($"** WARNING **: Ionburst Cloud is currently unavailable!");
-
-            return ionburstPrivate;
+            return defaultRepo.GetIonburst();
         }
 
         public IIonFSMetadata GetMetadataHandler(IonFSObject fso)
@@ -1121,19 +1116,19 @@ namespace Ionburst.Apps.IonFS
             await mh.DelMetadata(fso);
         }
 
-        public async Task<Dictionary<Guid, int>> GetChunk(Guid gid)
+        public async Task<Dictionary<string, int>> GetChunk(string cid)
         {
-            using var stream = File.Create(gid.ToString());
+            using var stream = File.Create(cid);
 
             ion.GetObjectRequest getObjectRequest = new ion.GetObjectRequest
             {
-                Particle = gid.ToString()
+                Particle = cid
             };
 
-            Dictionary<Guid, int> ids = new Dictionary<Guid, int>();
+            Dictionary<string, int> ids = new();
 
             ion.GetObjectResult getObjectResult = await GetIonburst().GetAsync(getObjectRequest);
-            ids.Add(gid, getObjectResult.StatusCode);
+            ids.Add(cid, getObjectResult.StatusCode);
 
             if (getObjectResult.StatusCode == 200)
             {
@@ -1145,8 +1140,7 @@ namespace Ionburst.Apps.IonFS
                     {
                         getObjectResult.DataStream.Seek(0, SeekOrigin.Begin);
                         byte[] hashBytes = sha.ComputeHash(getObjectResult.DataStream);
-                        Console.WriteLine(
-                            $"[{gid}:{getObjectResult.DataStream.Length}] - {Convert.ToBase64String(hashBytes)}");
+                        Console.WriteLine($"[{cid}:{getObjectResult.DataStream.Length}] - {Convert.ToBase64String(hashBytes)}");
                     }
                 }
             }

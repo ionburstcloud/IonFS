@@ -11,5 +11,6 @@ namespace Ionburst.Apps.IonFS.Model
         public string Class { get; set; }
         public string Assembly { get; set; }
         public string DataStore { get; set; }
+        public IonburstConfiguration Ionburst{ get; set; }
     }
 }

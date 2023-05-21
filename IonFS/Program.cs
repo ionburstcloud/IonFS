@@ -32,12 +32,13 @@ namespace IonFS
             var recursiveOption = new Option<bool>(new[] {"--recursive", "-r"});
             var quietOption = new Option<bool>(new[] {"--quiet", "-q"});
 
-            Command command =
-                new Command("list", "show the contents of a remote path, prefix remote paths with ion://");
+            Command command = new("list", "show the contents of a remote path, prefix remote paths with ion://")
+            {
+                folderArgument,
+                recursiveOption,
+                quietOption               
+            };
             command.AddAlias("ls");
-            command.Add(folderArgument);
-            command.Add(recursiveOption);
-            command.Add(quietOption);
             command.SetHandler(async (folder, recursive, quiet) =>
             {
                 try
@@ -60,7 +61,16 @@ namespace IonFS
                         else
                         {
                             int maxLen = items.Max(i => i.FullName.Length);
-                            foreach (var item in items)
+                            
+                            var folders = items.Where(i => i.IsFolder);
+                            var files = items.Where(i => !i.IsFolder);
+                            foreach (var item in folders)
+                            {
+                                Console.WriteLine("{0} {1} {2}",
+                                    item.IsFolder ? "d" : " ", item.FullName.PadRight(maxLen + 2, ' '),
+                                    !item.IsFolder ? item.LastModified.ToString() : "");
+                            }
+                            foreach (var item in files)
                             {
                                 Console.WriteLine("{0} {1} {2}",
                                     item.IsFolder ? "d" : " ", item.FullName.PadRight(maxLen + 2, ' '),
@@ -1045,12 +1055,12 @@ namespace IonFS
                     throw new ArgumentNullException(nameof(guid));
 
                 IonburstFS fs = new() {Verbose = verbose};
-                var results = await fs.GetChunk(Guid.Parse(guid));
+                var results = await fs.GetChunk(guid);
 
                 if (!results.All(r => r.Value == 200))
                 {
                     Console.WriteLine($"Error receiving data from Ionburst Cloud!");
-                    foreach (KeyValuePair<Guid, int> r in results)
+                    foreach (KeyValuePair<string, int> r in results)
                         Console.WriteLine($" {r.Key} {r.Value}");
                 }
             }, guidArgument, verboseOption);
@@ -1343,7 +1353,7 @@ namespace IonFS
                     {
                         try
                         {
-                            IonburstFS ionburst = new IonburstFS();
+                            IonburstFS ionburst = new();
 
                             Console.WriteLine("Ionburst Cloud {1} is {0}\n",
                                 (ionburst.IonburstStatus) ? "Online" : "Offline", ionburst.IonburstUri);

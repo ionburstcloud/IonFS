@@ -80,5 +80,16 @@ namespace Ionburst.Apps.IonFS.Model
                 IsFolder = false, IsRemote = isRemote, IsRoot = false, HasRepository = false
             };
         }
+        
+        public int CompareTo(IonFSObject other)
+        {
+            if (IsFolder == other.IsFolder && FullName == other.FullName)
+                return 0;
+            else if (IsFolder && !other.IsFolder && FullName == other.FullName)
+                return -1;
+            else 
+                return 1;
+        }
+
     }
 }
