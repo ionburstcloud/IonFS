@@ -3,7 +3,6 @@ using static System.Environment;
 using System.IO;
 using System.Threading.Tasks;
 using System.Collections.Generic;
-
 using Ionburst.Apps.IonFS.Model;
 using Ionburst.Apps.IonFS.Exceptions;
 using Newtonsoft.Json;
@@ -55,9 +54,11 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
         {
             bool exists;
             if (fso.IsFolder)
-                exists = Directory.Exists(Path.Combine(_dataStoreFolder.FullName, fso.FullName.Replace('/', Path.DirectorySeparatorChar)));
+                exists = Directory.Exists(Path.Combine(_dataStoreFolder.FullName,
+                    fso.FullName.Replace('/', Path.DirectorySeparatorChar)));
             else
-                exists = File.Exists(Path.Combine(_dataStoreFolder.FullName, fso.FullName.Replace('/',Path.DirectorySeparatorChar)));
+                exists = File.Exists(Path.Combine(_dataStoreFolder.FullName,
+                    fso.FullName.Replace('/', Path.DirectorySeparatorChar)));
 
             return exists;
         }
@@ -110,20 +111,21 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
 
             try
             {
-                SearchOption so = recursive? SearchOption.AllDirectories: SearchOption.TopDirectoryOnly;
-                var files = from file 
-                                in Directory.EnumerateFileSystemEntries(
-                                    Path.Combine(_dataStoreFolder.FullName, folder.FullName), 
-                                    "*", so
-                                    )
-                            select new
-                            {
-                                FileData = new FileInfo(file.Replace('/', Path.DirectorySeparatorChar))
-                            };
+                SearchOption so = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
+                var files = from file
+                        in Directory.EnumerateFileSystemEntries(
+                            Path.Combine(_dataStoreFolder.FullName, folder.FullName),
+                            "*", so
+                        )
+                    select new
+                    {
+                        FileData = new FileInfo(file.Replace('/', Path.DirectorySeparatorChar))
+                    };
 
                 foreach (var f in files)
                 {
-                    IonFSObject fso = IonFSObject.FromLocalFile(f.FileData.FullName.Replace(_dataStoreFolder.FullName+Path.DirectorySeparatorChar,""));
+                    IonFSObject fso = IonFSObject.FromLocalFile(
+                        f.FileData.FullName.Replace(_dataStoreFolder.FullName + Path.DirectorySeparatorChar, ""));
                     fso.FS = "ion://";
                     fso.IsRemote = true;
                     fso.IsFolder = (f.FileData.Attributes == FileAttributes.Directory);
@@ -136,7 +138,8 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
             catch (Exception e)
             {
                 throw new IonFSException("LocalFS Exception", folder, e);
-    }
+            }
+
             return items;
         }
 
@@ -185,6 +188,7 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
                 throw new IonFSException("LocalFS Exception", e);
             }
         }
+
         public async Task PutMetadata(IonFSMetadata metadata, IonFSObject folder)
         {
             if (metadata == null)
@@ -194,10 +198,12 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
 
             try
             {
-                using (StreamWriter streamWriter = File.CreateText(Path.Combine(_dataStoreFolder.FullName, folder.FullName)))
+                using (StreamWriter streamWriter =
+                       File.CreateText(Path.Combine(_dataStoreFolder.FullName, folder.FullName)))
                 {
                     //String data = JsonConvert.SerializeObject(metadata);
-                    String data = JsonConvert.SerializeObject(metadata, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+                    String data = JsonConvert.SerializeObject(metadata, Formatting.Indented,
+                        new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 
                     streamWriter.WriteLine(data);
                     streamWriter.Dispose();
@@ -208,7 +214,7 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
                 throw new IonFSException("LocalFS Exception", e);
             }
         }
-        
+
         public async Task<List<IonFSSearchResult>> Search(IonFSObject folder, string tag, string value, bool recursive)
         {
             try
@@ -221,14 +227,14 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
 
                 SearchOption so = recursive ? SearchOption.AllDirectories : SearchOption.TopDirectoryOnly;
                 var files = from file
-                                in Directory.EnumerateFileSystemEntries(
-                                    Path.Combine(_dataStoreFolder.FullName, folder.FullName),
-                                    "*", so
-                                    )
-                            select new
-                            {
-                                FileData = new FileInfo(file.Replace('/', Path.DirectorySeparatorChar))
-                            };
+                        in Directory.EnumerateFileSystemEntries(
+                            Path.Combine(_dataStoreFolder.FullName, folder.FullName),
+                            "*", so
+                        )
+                    select new
+                    {
+                        FileData = new FileInfo(file.Replace('/', Path.DirectorySeparatorChar))
+                    };
 
                 List<IonFSSearchResult> results = new();
                 foreach (var f in files)
@@ -250,7 +256,9 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
 
                                     if (m.Success)
                                     {
-                                        IonFSObject fso = IonFSObject.FromLocalFile(f.FileData.FullName.Replace(_dataStoreFolder.FullName + Path.DirectorySeparatorChar, ""));
+                                        IonFSObject fso = IonFSObject.FromLocalFile(
+                                            f.FileData.FullName.Replace(
+                                                _dataStoreFolder.FullName + Path.DirectorySeparatorChar, ""));
                                         fso.FS = "ion://";
                                         fso.IsRemote = true;
                                         fso.IsFolder = (f.FileData.Attributes == FileAttributes.Directory);
@@ -260,7 +268,8 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
                                         results.Add(
                                             new IonFSSearchResult()
                                             {
-                                                Name = f.FileData.FullName.Replace(_dataStoreFolder.FullName + Path.DirectorySeparatorChar, ""),
+                                                Name = f.FileData.FullName.Replace(
+                                                    _dataStoreFolder.FullName + Path.DirectorySeparatorChar, ""),
                                                 Tag = t.Name,
                                                 Value = t.Value,
                                                 Object = fso
@@ -280,6 +289,5 @@ namespace Ionburst.Apps.IonFS.Repo.LocalFS
                 throw e;
             }
         }
-
     }
 }

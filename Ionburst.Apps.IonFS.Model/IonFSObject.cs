@@ -21,7 +21,7 @@ namespace Ionburst.Apps.IonFS.Model
         public Boolean HasRepository { get; set; }
         public Boolean IsText { get; set; }
         public Boolean IsSecret { get; set; }
-        
+
         // Search Tags
         public List<IonFSTag> Tags { get; set; }
 
@@ -80,16 +80,15 @@ namespace Ionburst.Apps.IonFS.Model
                 IsFolder = false, IsRemote = isRemote, IsRoot = false, HasRepository = false
             };
         }
-        
+
         public int CompareTo(IonFSObject other)
         {
             if (IsFolder == other.IsFolder && FullName == other.FullName)
                 return 0;
             else if (IsFolder && !other.IsFolder && FullName == other.FullName)
                 return -1;
-            else 
+            else
                 return 1;
         }
-
     }
 }

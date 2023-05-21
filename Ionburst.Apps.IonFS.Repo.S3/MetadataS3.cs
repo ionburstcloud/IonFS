@@ -3,13 +3,10 @@
 using System;
 using System.IO;
 using System.Threading.Tasks;
-
 using Newtonsoft.Json;
-
 using Amazon.S3;
 using s3 = Amazon.S3.Model;
 using System.Collections.Generic;
-
 using Ionburst.Apps.IonFS.Exceptions;
 using Ionburst.Apps.IonFS.Model;
 
@@ -137,8 +134,8 @@ namespace Ionburst.Apps.IonFS.Repo.S3
                 s3.ListObjectsV2Request request = new s3.ListObjectsV2Request
                 {
                     BucketName = s3.GetBucket(),
-                    Prefix = folder.IsRoot?"":folder.Path,
-                    Delimiter = recursive?"":@"/"
+                    Prefix = folder.IsRoot ? "" : folder.Path,
+                    Delimiter = recursive ? "" : @"/"
                 };
                 s3.ListObjectsV2Response response;
 
@@ -146,7 +143,8 @@ namespace Ionburst.Apps.IonFS.Repo.S3
 
                 foreach (var common in response.CommonPrefixes)
                 {
-                    items.Add(new IonFSObject { FS = "ion://", Name = "", Path = common, IsFolder = true, IsRemote = true } );
+                    items.Add(new IonFSObject
+                        { FS = "ion://", Name = "", Path = common, IsFolder = true, IsRemote = true });
                 }
 
                 // Process the response.
@@ -233,7 +231,6 @@ namespace Ionburst.Apps.IonFS.Repo.S3
                 // Overwrites target if exists!!!
                 await s3.S3.CopyObjectAsync(copyRequest);
                 await s3.S3.DeleteObjectAsync(delRequest);
-
             }
             catch (AmazonS3Exception e)
             {
@@ -248,13 +245,14 @@ namespace Ionburst.Apps.IonFS.Repo.S3
             if (folder == null)
                 throw new ArgumentNullException(nameof(folder));
 
-            try 
+            try
             {
                 if (metadata != null)
                 {
                     if (string.IsNullOrEmpty(folder.Name)) folder.Name = metadata.Name;
 
-                    String data = JsonConvert.SerializeObject(metadata, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+                    String data = JsonConvert.SerializeObject(metadata, Formatting.Indented,
+                        new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 
                     s3.PutObjectRequest s3PutRequest = new s3.PutObjectRequest
                     {
@@ -297,11 +295,10 @@ namespace Ionburst.Apps.IonFS.Repo.S3
                 throw new IonFSException("S3 Exception", fSObject, e);
             }
         }
-        
+
         public async Task<List<IonFSSearchResult>> Search(IonFSObject folder, string tag, string regex, bool recursive)
         {
             throw new NotImplementedException();
         }
-
     }
 }

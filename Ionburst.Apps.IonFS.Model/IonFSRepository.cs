@@ -20,7 +20,13 @@ namespace Ionburst.Apps.IonFS.Model
         public string DataStore { get; set; }
         public string Usage { get; set; }
         public IIonFSMetadata Metadata { get; set; }
-        public IonburstConfiguration IonburstConfig { get { return ionburstConfig; } set { ionburstConfig = value; } }
+
+        public IonburstConfiguration IonburstConfig
+        {
+            get { return ionburstConfig; }
+            set { ionburstConfig = value; }
+        }
+
         public IIonburstClient GetIonburst()
         {
             ionburstPrivate ??= new IonburstClient()
@@ -33,6 +39,5 @@ namespace Ionburst.Apps.IonFS.Model
 
             return ionburstPrivate;
         }
-
     }
 }

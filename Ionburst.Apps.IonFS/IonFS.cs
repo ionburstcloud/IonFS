@@ -107,7 +107,7 @@ namespace Ionburst.Apps.IonFS
                     (a, b, c) => assem.GetType(configuredRepository.Class, true, false)
                 );
 
-                newRepository.Metadata = (IIonFSMetadata) Activator.CreateInstance(t, configuredRepository.DataStore,
+                newRepository.Metadata = (IIonFSMetadata)Activator.CreateInstance(t, configuredRepository.DataStore,
                     configuredRepository.Name, configuredRepository.Usage);
                 Repositories.Add(newRepository);
             }
@@ -164,8 +164,8 @@ namespace Ionburst.Apps.IonFS
         {
             return defaultRepo.GetIonburst();
         }
-        
-        protected IIonburstClient GetIonburst(string repo_name)
+
+        public IIonburstClient GetIonburst(string repo_name)
         {
             IonFSRepository repo = Repositories.Find(r => r.Repository == repo_name);
 
@@ -189,7 +189,7 @@ namespace Ionburst.Apps.IonFS
                 fso.Repository = m.RepositoryName;
                 fso.HasRepository = true;
             }
-            
+
             return m;
         }
 
@@ -240,7 +240,9 @@ namespace Ionburst.Apps.IonFS
                     };
 
                     ion.DeleteManifestResult delManifestResult;
-                    delManifestResult = await GetIonburst(mh.RepositoryName).DeleteAsync(delManifestRequest) as ion.DeleteManifestResult;
+                    delManifestResult =
+                        await GetIonburst(mh.RepositoryName)
+                            .DeleteAsync(delManifestRequest) as ion.DeleteManifestResult;
 
                     ids.Add(new KeyValuePair<Guid, int>(metadata.Id.First(), delManifestResult.StatusCode));
                     if (Verbose)
@@ -263,7 +265,6 @@ namespace Ionburst.Apps.IonFS
                             if (mh.Usage == "Secrets")
                             {
                                 delResult = await GetIonburst(mh.RepositoryName).SecretsDeleteAsync(delRequest);
-
                             }
                             else
                             {
@@ -271,7 +272,7 @@ namespace Ionburst.Apps.IonFS
                             }
 
                             ids.Add(new KeyValuePair<Guid, int>(id, delResult.StatusCode));
-                            
+
                             if (Verbose)
                                 Console.WriteLine($"{id} {delResult.StatusCode} {delResult.StatusMessage}");
                         }
@@ -387,7 +388,8 @@ namespace Ionburst.Apps.IonFS
                     };
                     metadata.Id.Add(guid);
 
-                    ion.PutManifestResult putManifestResult = await GetIonburst(mh.RepositoryName).PutAsync(putManifestRequest) as ion.PutManifestResult;
+                    ion.PutManifestResult putManifestResult =
+                        await GetIonburst(mh.RepositoryName).PutAsync(putManifestRequest) as ion.PutManifestResult;
 
                     ids.Add(guid, putManifestResult.StatusCode);
                 }
@@ -426,11 +428,11 @@ namespace Ionburst.Apps.IonFS
                                 Console.WriteLine("Chunk[{2}]:[{4}:{3}] {0} - {1}", l, boundary - 1, i++, boundary - l,
                                     guid);
 
-                            Burst burst = new Burst {start = l, end = boundary, size = boundary - l, id = guid};
+                            Burst burst = new Burst { start = l, end = boundary, size = boundary - l, id = guid };
 
                             var buffer = new byte[burst.size];
                             binaryReader.BaseStream.Seek(burst.start, SeekOrigin.Begin);
-                            binaryReader.Read(buffer, 0, (int) burst.size);
+                            binaryReader.Read(buffer, 0, (int)burst.size);
 
                             burst.data = buffer;
 
@@ -439,7 +441,7 @@ namespace Ionburst.Apps.IonFS
                         }
                     }
 
-                    ParallelOptions parallelOptions = new() {MaxDegreeOfParallelism = 8};
+                    ParallelOptions parallelOptions = new() { MaxDegreeOfParallelism = 8 };
                     Parallel.ForEach(bursts, parallelOptions, (burst) =>
                         {
                             // Ionburst
@@ -609,7 +611,8 @@ namespace Ionburst.Apps.IonFS
                 };
 
                 ion.DeleteManifestResult delManifestResult;
-                delManifestResult = await GetIonburst(mh.RepositoryName).DeleteAsync(delManifestRequest) as ion.DeleteManifestResult;
+                delManifestResult =
+                    await GetIonburst(mh.RepositoryName).DeleteAsync(delManifestRequest) as ion.DeleteManifestResult;
 
                 ids.Add(new KeyValuePair<Guid, int>(metadata.Id.First(), delManifestResult.StatusCode));
                 if (Verbose)
@@ -682,7 +685,8 @@ namespace Ionburst.Apps.IonFS
             };
             metadata.Id.Add(guid);
 
-            ion.PutManifestResult putManifestResult = await GetIonburst(mh.RepositoryName).PutAsync(putManifestRequest) as ion.PutManifestResult;
+            ion.PutManifestResult putManifestResult =
+                await GetIonburst(mh.RepositoryName).PutAsync(putManifestRequest) as ion.PutManifestResult;
 
             ids.Add(guid, putManifestResult.StatusCode);
 
@@ -704,7 +708,8 @@ namespace Ionburst.Apps.IonFS
                 Particle = metadata.Id.First().ToString(),
             };
 
-            ion.GetManifestResult getManifestResult = await GetIonburst(mh.RepositoryName).GetAsync(getManifestRequest) as ion.GetManifestResult;
+            ion.GetManifestResult getManifestResult =
+                await GetIonburst(mh.RepositoryName).GetAsync(getManifestRequest) as ion.GetManifestResult;
 
             ids.Add(metadata.Id.First(), getManifestResult.StatusCode);
 
@@ -767,8 +772,9 @@ namespace Ionburst.Apps.IonFS
                     Particle = metadata.Id.First().ToString(),
                 };
 
-                ion.GetManifestResult getManifestResult = await GetIonburst(mh.RepositoryName).GetAsync(getManifestRequest) as ion.GetManifestResult;
-                
+                ion.GetManifestResult getManifestResult =
+                    await GetIonburst(mh.RepositoryName).GetAsync(getManifestRequest) as ion.GetManifestResult;
+
                 getManifestResult.DataStream.Seek(0, SeekOrigin.Begin);
                 getManifestResult.DataStream.CopyTo(stream);
 
@@ -948,7 +954,8 @@ namespace Ionburst.Apps.IonFS
         public async Task<IDictionary<int, string>> GetClassifications(string repoName)
         {
             ion.GetPolicyClassificationRequest classificationRequest = new ion.GetPolicyClassificationRequest();
-            ion.GetPolicyClassificationResult classificationResult = await GetIonburst(repoName).GetClassificationsAsync(classificationRequest);
+            ion.GetPolicyClassificationResult classificationResult =
+                await GetIonburst(repoName).GetClassificationsAsync(classificationRequest);
 
             if (classificationResult.StatusCode != 200)
                 throw new IonFSException(classificationResult.StatusMessage);
@@ -1144,7 +1151,8 @@ namespace Ionburst.Apps.IonFS
                     {
                         getObjectResult.DataStream.Seek(0, SeekOrigin.Begin);
                         byte[] hashBytes = sha.ComputeHash(getObjectResult.DataStream);
-                        Console.WriteLine($"[{cid}:{getObjectResult.DataStream.Length}] - {Convert.ToBase64String(hashBytes)}");
+                        Console.WriteLine(
+                            $"[{cid}:{getObjectResult.DataStream.Length}] - {Convert.ToBase64String(hashBytes)}");
                     }
                 }
             }

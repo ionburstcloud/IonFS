@@ -5,9 +5,7 @@ using System.Collections.Generic;
 using System.Threading.Tasks;
 using MongoDB.Bson;
 using MongoDB.Driver;
-
 using Newtonsoft.Json;
-
 using Ionburst.Apps.IonFS.Model;
 
 namespace Ionburst.Apps.IonFS.Repo.Mongo
@@ -43,7 +41,8 @@ namespace Ionburst.Apps.IonFS.Repo.Mongo
 
             try
             {
-                IMongoCollection<IMongoDBIonFSMetadata> objectMetadata = _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
+                IMongoCollection<IMongoDBIonFSMetadata> objectMetadata =
+                    _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
                 var filter = Builders<IMongoDBIonFSMetadata>.Filter.Eq("Key", file.FullName);
                 List<IMongoDBIonFSMetadata> metadataList = await objectMetadata.Find(filter).ToListAsync();
                 IMongoDBIonFSMetadata metadataEntry = metadataList[0];
@@ -73,7 +72,8 @@ namespace Ionburst.Apps.IonFS.Repo.Mongo
 
             try
             {
-                IMongoCollection<IMongoDBIonFSMetadata> objectMetadata = _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
+                IMongoCollection<IMongoDBIonFSMetadata> objectMetadata =
+                    _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
                 var filter = Builders<IMongoDBIonFSMetadata>.Filter.Eq("Key", fso.FullName);
                 List<IMongoDBIonFSMetadata> metadataList = await objectMetadata.Find(filter).ToListAsync();
 
@@ -123,7 +123,8 @@ namespace Ionburst.Apps.IonFS.Repo.Mongo
 
             try
             {
-                IMongoCollection<IMongoDBIonFSMetadata> objectMetadata = _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
+                IMongoCollection<IMongoDBIonFSMetadata> objectMetadata =
+                    _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
                 List<IMongoDBIonFSMetadata> metadataList = await objectMetadata.Find(_ => true).ToListAsync();
                 if (metadataList.Count > 0)
                 {
@@ -131,15 +132,15 @@ namespace Ionburst.Apps.IonFS.Repo.Mongo
                     {
                         //if (metadataobject.Key != folder.Path || recursive)
                         //{
-                            IonFSObject fso = IonFSObject.FromLocalFile(metadataobject.Key);
-                            fso.FS = "ion://";
-                            fso.IsRemote = true;
-                            if (metadataobject.Key.EndsWith(@"/", StringComparison.Ordinal))
-                                fso.IsFolder = true;
-                            else
-                                fso.IsFolder = false;
-                            fso.LastModified = metadataobject.LastModified;
-                            items.Add(fso);
+                        IonFSObject fso = IonFSObject.FromLocalFile(metadataobject.Key);
+                        fso.FS = "ion://";
+                        fso.IsRemote = true;
+                        if (metadataobject.Key.EndsWith(@"/", StringComparison.Ordinal))
+                            fso.IsFolder = true;
+                        else
+                            fso.IsFolder = false;
+                        fso.LastModified = metadataobject.LastModified;
+                        items.Add(fso);
                         //}
                     }
                 }
@@ -171,7 +172,8 @@ namespace Ionburst.Apps.IonFS.Repo.Mongo
                         Key = folder.Path,
                         LastModified = DateTime.UtcNow
                     };
-                    IMongoCollection<IMongoDBIonFSMetadata> objectMetadata = _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
+                    IMongoCollection<IMongoDBIonFSMetadata> objectMetadata =
+                        _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
                     await objectMetadata.InsertOneAsync(obj);
                 }
             }
@@ -194,7 +196,8 @@ namespace Ionburst.Apps.IonFS.Repo.Mongo
 
             try
             {
-                IMongoCollection<IMongoDBIonFSMetadata> objectMetadata = _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
+                IMongoCollection<IMongoDBIonFSMetadata> objectMetadata =
+                    _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
                 var filter = Builders<IMongoDBIonFSMetadata>.Filter.Eq("Key", source.FullName);
                 List<IMongoDBIonFSMetadata> metadataList = await objectMetadata.Find(filter).ToListAsync();
                 IMongoDBIonFSMetadata metadataEntry = metadataList[0];
@@ -231,7 +234,8 @@ namespace Ionburst.Apps.IonFS.Repo.Mongo
             {
                 if (metadata != null)
                 {
-                    String data = JsonConvert.SerializeObject(metadata, Formatting.Indented, new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
+                    String data = JsonConvert.SerializeObject(metadata, Formatting.Indented,
+                        new JsonSerializerSettings { NullValueHandling = NullValueHandling.Ignore });
 
                     IMongoDBIonFSMetadata obj = new MongoDBIonFSMetadata
                     {
@@ -241,7 +245,8 @@ namespace Ionburst.Apps.IonFS.Repo.Mongo
                         LastModified = DateTime.UtcNow
                     };
 
-                    IMongoCollection<IMongoDBIonFSMetadata> objectMetadata = _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
+                    IMongoCollection<IMongoDBIonFSMetadata> objectMetadata =
+                        _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
                     await objectMetadata.InsertOneAsync(obj);
 
                     if (Verbose) Console.WriteLine(data);
@@ -266,7 +271,8 @@ namespace Ionburst.Apps.IonFS.Repo.Mongo
 
             try
             {
-                IMongoCollection<IMongoDBIonFSMetadata> objectMetadata = _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
+                IMongoCollection<IMongoDBIonFSMetadata> objectMetadata =
+                    _mongo.MongoDB.GetCollection<IMongoDBIonFSMetadata>(COLLECTION_NAME);
                 var filter = Builders<IMongoDBIonFSMetadata>.Filter.Eq("Key", fSObject.FullName);
                 await objectMetadata.DeleteOneAsync(filter);
             }
@@ -279,11 +285,10 @@ namespace Ionburst.Apps.IonFS.Repo.Mongo
                 Console.WriteLine($"MetadataMongoDB.DelMetadata exception:  {e}");
             }
         }
-        
+
         public async Task<List<IonFSSearchResult>> Search(IonFSObject folder, string tag, string regex, bool recursive)
         {
             throw new NotImplementedException();
         }
-
     }
 }
