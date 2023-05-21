@@ -1113,6 +1113,59 @@ namespace Ionburst.Apps.IonFS
                 return IonFSObject.FromLocalFile(val);
         }
 
+        public async Task<ConcurrentDictionary<Guid, int>> CheckAsync(IonFSObject file)
+        {
+            if (file == null)
+                throw new ArgumentNullException(nameof(file));
+
+            ConcurrentDictionary<Guid, int> ids = new();
+
+            try
+            {
+                IIonFSMetadata mh = GetMetadataHandler(file);
+                IonFSMetadata metadata = await mh.GetMetadata(file);
+
+                if (Verbose)
+                    Console.WriteLine("Verifying chunks:");
+
+                if (!metadata.IsManifest && !(mh.Usage == "Secrets"))
+                {
+                    ParallelOptions parallelOptions = new() { MaxDegreeOfParallelism = 8 };
+                    Parallel.ForEach(metadata.Id, parallelOptions, (id) =>
+                        {
+                            // Ionburst
+                            ion.CheckObjectRequest checkRequest = new()
+                            {
+                                Particle = id.ToString(),
+                                TimeoutSpecified = true,
+                                RequestTimeout = new TimeSpan(0, 2, 0)
+                            };
+
+                            ion.CheckObjectResult checkResult;
+                            if (mh.Usage == "Secrets")
+                            {
+                                checkResult = GetIonburst(mh.RepositoryName).SecretsCheckAsync(checkRequest).Result;
+                            }
+                            else
+                            {
+                                checkResult = GetIonburst(mh.RepositoryName).CheckAsync(checkRequest).Result;
+                            }
+
+                            ids.TryAdd(id, checkResult.StatusCode);
+
+                            if (Verbose)
+                                Console.WriteLine($"Chunk {id}: {checkResult.StatusCode} {checkResult.StatusMessage}");
+                        }
+                    );
+                }
+            }
+            catch (IonFSObjectDoesNotExist e)
+            {
+                throw new IonFSException($"The FSObject {e.Message} does not exist!", e);
+            }
+
+            return ids;
+        }
 
         // Internal tools for lower level interaction with ionburst directly
         // - use with care

@@ -61,7 +61,7 @@ namespace IonFS
                         else
                         {
                             int maxLen = items.Max(i => i.FullName.Length);
-                            
+
                             foreach (var item in items)
                             {
                                 Console.WriteLine("{0} {1} {2} {3}",
@@ -109,20 +109,27 @@ namespace IonFS
             var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
             var keyOption = new Option<string>(new[] { "--key", "-k" }, "path to symmetric key");
             var passphraseOption = new Option<string>(new[] { "--passphrase", "-pp" }, "passphrase to generate key");
+            var quietOption = new Option<bool>(new[] { "--quiet", "-q" });
 
-            Command command = new Command("get", "download a file, prefix remote paths with ion://");
-            command.Add(fromArgument);
-            command.Add(toArgument);
-            command.Add(nameOption);
-            command.Add(verboseOption);
-            command.Add(keyOption);
-            command.Add(passphraseOption);
-            command.SetHandler(async (from, to, name, verbose, key, passphrase) =>
+            Command command = new Command("get", "download a file, prefix remote paths with ion://")
+            {
+                fromArgument,
+                toArgument,
+                nameOption,
+                verboseOption,
+                keyOption,
+                passphraseOption,
+                quietOption
+            };
+            command.SetHandler(async (from, to, name, verbose, key, passphrase, quiet) =>
             {
                 try
                 {
                     if (string.IsNullOrEmpty(from))
                         throw new ArgumentNullException(nameof(from));
+
+                    if (!quiet)
+                        Console.WriteLine(Logo());
 
                     IonburstFS fs = new() { Verbose = verbose };
 
@@ -154,6 +161,8 @@ namespace IonFS
                         foreach (var r in results)
                             Console.WriteLine($" {r.Key} {r.Value}");
                     }
+                    else
+                        Console.WriteLine($"{fromFso.Name} has been downloaded.");
                 }
                 catch (RemoteFSException e)
                 {
@@ -169,7 +178,7 @@ namespace IonFS
                 {
                     Console.WriteLine(e.Message);
                 }
-            }, fromArgument, toArgument, nameOption, verboseOption, keyOption, passphraseOption);
+            }, fromArgument, toArgument, nameOption, verboseOption, keyOption, passphraseOption, quietOption);
 
             return command;
         }
@@ -191,6 +200,7 @@ namespace IonFS
             var manifestOption =
                 new Option<bool>(new[] { "--manifest", "-m" }, "Store large objects using SDK Manifest");
             var nativeOption = new Option<bool>(new[] { "--native" }, "Store large objects using native chunking");
+            var quietOption = new Option<bool>(new[] { "--quiet", "-q" });
 
             var tagOption =
                 new Option<string>(new[] { "--tags" }, "Search tags in the format tag=value[:tag=value]...");
@@ -207,7 +217,8 @@ namespace IonFS
                 blockSizeOption,
                 manifestOption,
                 nativeOption,
-                tagOption
+                tagOption,
+                quietOption
             };
             //command.SetHandler(async (localfile, folder, name, classification, verbose, key, passphrase, blocksize) => 
             command.SetHandler(async (context) =>
@@ -225,11 +236,15 @@ namespace IonFS
                     bool manifest = context.ParseResult.GetValueForOption(manifestOption);
                     bool native = context.ParseResult.GetValueForOption(nativeOption);
                     string tags = context.ParseResult.GetValueForOption(tagOption); // tag=value:tag=value:tag=value
+                    bool quiet = context.ParseResult.GetValueForOption(quietOption);
 
                     if (string.IsNullOrEmpty(localfile))
                         throw new ArgumentNullException(nameof(localfile));
                     if (string.IsNullOrEmpty(folder))
                         throw new ArgumentNullException(nameof(folder));
+
+                    if (!quiet)
+                        Console.WriteLine(Logo());
 
                     IonburstFS fs = new()
                     {
@@ -304,6 +319,8 @@ namespace IonFS
                         foreach (var r in results)
                             Console.WriteLine($" {r.Key} {r.Value}");
                     }
+                    else
+                        Console.WriteLine($"{fsoFrom} has been uploaded.");
 
                     if (verbose)
                     {
@@ -334,6 +351,74 @@ namespace IonFS
                 }
                 //}, localFileArgument, folderArgument, nameOption, classificationOption, verboseOption, keyOption, passPhraseOption, blockSizeOption);
             });
+
+            return command;
+        }
+
+        private static Command Check()
+        {
+            var pathArgument = new Argument<string>("path", "path to remove") { Arity = ArgumentArity.ExactlyOne };
+
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
+            var quietOption = new Option<bool>(new[] { "--quiet", "-q" });
+
+            Command command = new("check", "check an object, prefix remote paths with ion://")
+            {
+                pathArgument,
+                verboseOption,
+                quietOption
+            };
+            command.AddAlias("verify");
+            command.SetHandler(async (path, verbose, quiet) =>
+            {
+                try
+                {
+                    if (string.IsNullOrEmpty(path))
+                        throw new ArgumentNullException(nameof(path));
+
+                    if (!quiet)
+                        Console.WriteLine(Logo());
+
+                    IonburstFS fs = new() { Verbose = verbose };
+                    IonFSObject fso = fs.FromRemoteFile(path);
+
+                    Stopwatch sw = new();
+                    if (verbose)
+                        sw.Start();
+
+                    if (fso.IsFolder)
+                    {
+                        if (verbose)
+                            Console.WriteLine("Folders are not supported");
+                    }
+                    else
+                    {
+                        var results = await fs.CheckAsync(fso);
+                        if (!results.All(r => r.Value == 200))
+                        {
+                            Console.WriteLine($"Error verifying Ionburst Cloud data!");
+                            foreach (var r in results)
+                                Console.WriteLine($" {r.Key} {r.Value}");
+                        }
+                        else
+                            Console.WriteLine($"{fso.Name} has been verified.");
+                    }
+
+                    if (verbose)
+                    {
+                        sw.Stop();
+                        Console.WriteLine($"Duration: {sw.ElapsedMilliseconds}ms");
+                    }
+                }
+                catch (RemoteFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+                catch (IonFSException e)
+                {
+                    Console.WriteLine(e.Message);
+                }
+            }, pathArgument, verboseOption, quietOption);
 
             return command;
         }
@@ -683,18 +768,25 @@ namespace IonFS
 
             var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
             var recursiveOption = new Option<bool>(new[] { "--recursive", "-r" });
+            var quietOption = new Option<bool>(new[] { "--quiet", "-q" });
 
-            Command command = new("del", "delete an object, prefix remote paths with ion://");
+            Command command = new("del", "delete an object, prefix remote paths with ion://")
+            {
+                pathArgument,
+                verboseOption,
+                recursiveOption,
+                quietOption
+            };
             command.AddAlias("rm");
-            command.Add(pathArgument);
-            command.Add(verboseOption);
-            command.Add(recursiveOption);
-            command.SetHandler(async (path, verbose, recursive) =>
+            command.SetHandler(async (path, verbose, recursive, quiet) =>
             {
                 try
                 {
                     if (string.IsNullOrEmpty(path))
                         throw new ArgumentNullException(nameof(path));
+
+                    if (!quiet)
+                        Console.WriteLine(Logo());
 
                     IonburstFS fs = new() { Verbose = verbose };
                     IonFSObject fso = fs.FromRemoteFile(path);
@@ -714,12 +806,14 @@ namespace IonFS
                             foreach (var r in results)
                                 Console.WriteLine($" {r.Key} {r.Value}");
                         }
+                        else
+                            Console.WriteLine($"{fso.Name} has been deleted.");
                     }
 
                     if (verbose)
                     {
                         sw.Stop();
-                        Console.WriteLine($"Duration: {sw.ElapsedMilliseconds} ");
+                        Console.WriteLine($"Duration: {sw.ElapsedMilliseconds}ms");
                     }
                 }
                 catch (RemoteFSException e)
@@ -730,7 +824,7 @@ namespace IonFS
                 {
                     Console.WriteLine(e.Message);
                 }
-            }, pathArgument, verboseOption, recursiveOption);
+            }, pathArgument, verboseOption, recursiveOption, quietOption);
 
             return command;
         }
@@ -1404,6 +1498,7 @@ namespace IonFS
 
                 #region Register Commands
 
+                command.AddCommand(Check());
                 command.AddCommand(List());
                 command.AddCommand(Get());
                 command.AddCommand(Put());
