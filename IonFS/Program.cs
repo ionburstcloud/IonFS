@@ -320,7 +320,17 @@ namespace IonFS
                             Console.WriteLine($" {r.Key} {r.Value}");
                     }
                     else
-                        Console.WriteLine($"{fsoFrom} has been uploaded.");
+                    {
+                        var check = await fs.CheckAsync(fsoNewTo);
+                        if (!check.IsEmpty && !check.All(r => r.Value == 200))
+                        {
+                            Console.WriteLine($"Error verifying data in Ionburst Cloud!");
+                            foreach (var r in results)
+                                Console.WriteLine($" {r.Key} {r.Value}");
+                        }
+
+                        Console.WriteLine($"{fsoFrom} has been uploaded and verified.");
+                    }
 
                     if (verbose)
                     {
@@ -330,7 +340,7 @@ namespace IonFS
 
                     if (verbose && results.All(r => r.Value == 200))
                     {
-                        Console.WriteLine($"Bursts:");
+                        Console.WriteLine($"Bursts Status:");
                         foreach (var r in results)
                             Console.WriteLine($" {r.Key} {r.Value}");
                     }

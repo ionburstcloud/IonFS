@@ -287,7 +287,7 @@ namespace Ionburst.Apps.IonFS
             }
             catch (IonFSObjectDoesNotExist e)
             {
-                throw new IonFSException($"The FSObject {e.Message} does not exist!", e);
+                throw new IonFSException($"{e.GetType()}-{e.Message}", e);
             }
 
             return ids;
@@ -437,7 +437,7 @@ namespace Ionburst.Apps.IonFS
                                 Console.WriteLine("Chunk[{2}]:[{4}:{3}] {0} - {1}", l, boundary - 1, i++, boundary - l,
                                     guid);
 
-                            Burst burst = new Burst { start = l, end = boundary, size = boundary - l, id = guid };
+                            Burst burst = new() { start = l, end = boundary, size = boundary - l, id = guid };
 
                             var buffer = new byte[burst.size];
                             binaryReader.BaseStream.Seek(burst.start, SeekOrigin.Begin);
@@ -1126,7 +1126,7 @@ namespace Ionburst.Apps.IonFS
                 IonFSMetadata metadata = await mh.GetMetadata(file);
 
                 if (Verbose)
-                    Console.WriteLine("Verifying chunks:");
+                    Console.WriteLine($"Verifying chunks for {file.FullFSName}:");
 
                 if (!metadata.IsManifest && !(mh.Usage == "Secrets"))
                 {
@@ -1154,14 +1154,14 @@ namespace Ionburst.Apps.IonFS
                             ids.TryAdd(id, checkResult.StatusCode);
 
                             if (Verbose)
-                                Console.WriteLine($"Chunk {id}: {checkResult.StatusCode} {checkResult.StatusMessage}");
+                                Console.WriteLine($"Verifying chunk {id}: {checkResult.StatusCode} {checkResult.StatusMessage}");
                         }
                     );
                 }
             }
             catch (IonFSObjectDoesNotExist e)
             {
-                throw new IonFSException($"The FSObject {e.Message} does not exist!", e);
+                throw new IonFSException($"{e.GetType()}-{e.Message}", e);
             }
 
             return ids;
