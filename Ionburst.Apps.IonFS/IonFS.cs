@@ -251,7 +251,8 @@ namespace Ionburst.Apps.IonFS
                 }
                 else
                 {
-                    _ = Parallel.ForEach(metadata.Id, async (id) =>
+                    ParallelOptions parallelOptions = new() { MaxDegreeOfParallelism = 8 };
+                    Parallel.ForEach(metadata.Id, parallelOptions, async (id) =>
                         {
                             // Ionburst
                             ion.DeleteObjectRequest delRequest = new ion.DeleteObjectRequest
@@ -264,11 +265,11 @@ namespace Ionburst.Apps.IonFS
                             ion.DeleteObjectResult delResult;
                             if (mh.Usage == "Secrets")
                             {
-                                delResult = await GetIonburst(mh.RepositoryName).SecretsDeleteAsync(delRequest);
+                                delResult = GetIonburst(mh.RepositoryName).SecretsDeleteAsync(delRequest).Result;
                             }
                             else
                             {
-                                delResult = await GetIonburst(mh.RepositoryName).DeleteAsync(delRequest);
+                                delResult = GetIonburst(mh.RepositoryName).DeleteAsync(delRequest).Result;
                             }
 
                             ids.TryAdd(id, delResult.StatusCode);
@@ -279,7 +280,7 @@ namespace Ionburst.Apps.IonFS
                     );
                 }
 
-                if (ids.All(id => id.Value == 200))
+                if (!ids.IsEmpty && ids.All(id => id.Value == 200))
                 {
                     await mh.DelMetadata(file);
                 }
@@ -391,9 +392,9 @@ namespace Ionburst.Apps.IonFS
                     ion.PutManifestResult putManifestResult =
                         await GetIonburst(mh.RepositoryName).PutAsync(putManifestRequest) as ion.PutManifestResult;
 
-                    if (putManifestResult != null)
+                    if (putManifestResult != null && Verbose)
                         Console.WriteLine(
-                            $"{putManifestRequest.Particle} {putManifestResult.StatusCode} {putManifestResult.ActivityToken}");
+                            $"{putManifestRequest.Particle} {putManifestResult.StatusCode} {putManifestResult.StatusMessage}");
 
                     if (putManifestResult != null && putManifestResult.StatusCode == 200)
                     {
@@ -940,7 +941,11 @@ namespace Ionburst.Apps.IonFS
                 i.HasRepository = true;
             });
 
-            items.Sort((s1, s2) => { return s1.FullName.CompareTo(s2.FullName); });
+            items.Sort((s1, s2) =>
+            {
+                var sortResult = s1.FullName.CompareTo(s2.FullName);
+                return (s1.IsFolder && !s2.IsFolder) ? sortResult - 1000 : sortResult;
+            });
 
             return items;
         }
@@ -1139,7 +1144,7 @@ namespace Ionburst.Apps.IonFS
         {
             using var stream = File.Create(cid);
 
-            ion.GetObjectRequest getObjectRequest = new ion.GetObjectRequest
+            ion.GetObjectRequest getObjectRequest = new()
             {
                 Particle = cid
             };
@@ -1166,6 +1171,25 @@ namespace Ionburst.Apps.IonFS
             }
 
             return ids;
+        }
+
+        public bool CheckChunk(string repoName, string cid)
+        {
+            bool exists = false;
+
+            ion.CheckObjectRequest checkObjectRequest = new()
+            {
+                Particle = cid
+            };
+
+            ion.CheckObjectResult checkObjectResult = GetIonburst(repoName).Check(checkObjectRequest);
+
+            exists = checkObjectResult.StatusCode == 200;
+
+            if (Verbose)
+                Console.WriteLine($"{checkObjectResult.StatusCode} {checkObjectResult.StatusMessage}");
+
+            return exists;
         }
 
         // Public implementation of Dispose pattern callable by consumers.

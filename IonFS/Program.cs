@@ -61,17 +61,8 @@ namespace IonFS
                         else
                         {
                             int maxLen = items.Max(i => i.FullName.Length);
-
-                            var folders = items.Where(i => i.IsFolder);
-                            var files = items.Where(i => !i.IsFolder);
-                            foreach (var item in folders)
-                            {
-                                Console.WriteLine("{0} {1} {2}",
-                                    item.IsFolder ? "d" : " ", item.FullName.PadRight(maxLen + 2, ' '),
-                                    !item.IsFolder ? item.LastModified.ToString() : "");
-                            }
-
-                            foreach (var item in files)
+                            
+                            foreach (var item in items)
                             {
                                 Console.WriteLine("{0} {1} {2} {3}",
                                     item.IsFolder ? "d" : " ", item.FullName.PadRight(maxLen + 2, ' '),
@@ -199,7 +190,7 @@ namespace IonFS
             var blockSizeOption = new Option<int>(new[] { "--blocksize", "-bs" }, "Block size in bytes");
             var manifestOption =
                 new Option<bool>(new[] { "--manifest", "-m" }, "Store large objects using SDK Manifest");
-            var nativeOption = new Option<bool>(new[] {"--native"}, "Store large objects using native chunking");
+            var nativeOption = new Option<bool>(new[] { "--native" }, "Store large objects using native chunking");
 
             var tagOption =
                 new Option<string>(new[] { "--tags" }, "Search tags in the format tag=value[:tag=value]...");
@@ -1055,8 +1046,8 @@ namespace IonFS
             var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
 
             Command command = new("get-id") { IsHidden = true };
-            command.Add(guidArgument);
             command.Add(repoArgument);
+            command.Add(guidArgument);
             command.Add(verboseOption);
             command.SetHandler(async (repo, guid, verbose) =>
             {
@@ -1072,6 +1063,31 @@ namespace IonFS
                     foreach (KeyValuePair<string, int> r in results)
                         Console.WriteLine($" {r.Key} {r.Value}");
                 }
+            }, repoArgument, guidArgument, verboseOption);
+
+            return command;
+        }
+
+        private static Command CheckChunkById()
+        {
+            var repoArgument = new Argument<string>("repo") { Arity = ArgumentArity.ExactlyOne };
+            var guidArgument = new Argument<string>("guid") { Arity = ArgumentArity.ExactlyOne };
+
+            var verboseOption = new Option<bool>(new[] { "--verbose", "-v" });
+
+            Command command = new("check-id") { IsHidden = true };
+            command.Add(repoArgument);
+            command.Add(guidArgument);
+            command.Add(verboseOption);
+            command.SetHandler(async (repo, guid, verbose) =>
+            {
+                if (guid == null)
+                    throw new ArgumentNullException(nameof(guid));
+
+                IonburstFS fs = new() { Verbose = verbose };
+                bool result = fs.CheckChunk(repo, guid);
+
+                Console.WriteLine("{0} {1}", guid, (!result) ? "does NOT exist" : "exists");
             }, repoArgument, guidArgument, verboseOption);
 
             return command;
@@ -1401,6 +1417,7 @@ namespace IonFS
                 command.AddCommand(RemoveDir());
                 command.AddCommand(DeleteById());
                 command.AddCommand(DeleteMetadata());
+                command.AddCommand(CheckChunkById());
                 command.AddCommand(GetChunkById());
                 command.AddCommand(GetMetadata());
                 command.AddCommand(AddMetadata());
