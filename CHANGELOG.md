@@ -2,6 +2,13 @@
 
 <!--- next entry here -->
 
+## 0.4.0-develop.3
+2023-06-19
+
+### Fixes
+
+- remove log line from assembly debug (38c503408867f8faf0e69709fabcedeb64691d54)
+
 ## 0.4.0-develop.2
 2023-06-19
 
