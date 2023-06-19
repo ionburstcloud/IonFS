@@ -100,7 +100,12 @@ namespace Ionburst.Apps.IonFS
 
                 //Type t = Type.GetType(configuredRepository.Class, Assembly.LoadFrom(configuredRepository.Assembly), );
 
-                Assembly assem = Assembly.LoadFrom(configuredRepository.Assembly);
+                AssemblyName assemName = new AssemblyName()
+                {
+                    Name = configuredRepository.Assembly
+                };
+                Console.WriteLine(assemName);
+                Assembly assem = Assembly.Load(assemName);
 
                 Type t = Type.GetType(configuredRepository.Class,
                     (name) => Assembly.LoadFrom(configuredRepository.Assembly),
