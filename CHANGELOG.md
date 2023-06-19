@@ -2,6 +2,13 @@
 
 <!--- next entry here -->
 
+## 0.4.0-develop.2
+2023-06-19
+
+### Fixes
+
+- restore working Assembly.Load method for metadata repos (62ed3d17df2445ffdc57a4e35a4654f7832d7bf4)
+
 ## 0.4.0-develop.1
 2023-05-21
 
